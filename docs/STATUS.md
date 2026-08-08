@@ -1,28 +1,22 @@
 # Project status
 
-## Current state
+## Current state — v0.1.0 release candidate
 
-- **Repository:** private design/planning repository.
-- **Code:** not started by design.
-- **Distribution:** not published; no package is installed from PyPI.
-- **Official MCP Registry:** not submitted.
-- **Telegram live E2E:** not yet run.
-- **Hermes integration:** not yet run against this product.
+- The Telegram Managed Bots live spike passed on 2026-08-08 with redacted evidence.
+- Typed package, SQLite state machine, local secret store, persistent worker, isolated runtime, four built-in profiles, six-tool MCP server, setup, systemd unit, and Hermes installer are implemented.
+- Windows development suite: 52 passed and one OS-specific symlink test skipped before the final privacy-boundary test was added.
+- Ubuntu/WSL2 suite: 53 passed, including POSIX permissions and symlink rejection.
+- Hermes 0.18 legacy stdio acceptance discovered exactly six tools.
+- Modern MCP acceptance covers discovery, stateless HTTP headers, MRTR expiry/tamper/principal/replay protection, absence of Tasks capability, and trace redaction.
+- Wheel and sdist build, `twine check`, dependency audit, package scan, workflow audit, and Git-history credential-shape scan pass locally.
+- `server.json` validates with official `mcp-publisher` 1.7.9 and the current Registry schema.
 
-## Name check performed during bootstrap
+## External gates still open
 
-`telegram-managed-bot-factory` returned HTTP 404 from the PyPI JSON endpoint during initial setup, and the GitHub repository name was available under `laser54`.
+- Repository remains private until the final public-history review.
+- TestPyPI and PyPI Trusted Publisher identities/environments are not configured yet.
+- The TestPyPI candidate has not been installed or used for the second live Telegram E2E.
+- No `v0.1.0` tag or GitHub Release exists.
+- The Official MCP Registry entry is prepared but cannot be published before PyPI.
 
-This check is evidence of availability at that moment only. PyPI package names are not reserved by a 404 check. Re-check immediately before TestPyPI/PyPI upload.
-
-## Next milestone
-
-Complete the disposable Telegram Managed Bots capability spike in [START_HERE.md](START_HERE.md). It is the only approved next implementation step.
-
-## Before making the repository public
-
-1. Remove all private-environment references and confirm no real usernames, paths, topology, IDs, fixtures, or credentials remain.
-2. Run a full Git history and artifact secret scan.
-3. Add working code, tests, CI, security policy, release documentation, and live E2E evidence.
-4. Ensure every README claim is substantiated.
-5. Decide public issue/discussion settings and license with the maintainer.
+No README or status statement should claim those external gates have passed until verified.

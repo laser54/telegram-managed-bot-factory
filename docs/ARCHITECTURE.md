@@ -53,20 +53,22 @@ State must be durable and non-secret. Every transition records timestamp, safe r
 
 ## Explicit handles, not transport sessions
 
-MCP `2026-07-28` removes protocol sessions. The Factory therefore returns `request_id` on every creation request. Every future stateful tool requires that explicit handle and authorizes it for the caller. A compatible modern client may additionally receive a standard Tasks handle; it cannot be the only way to observe work.
+MCP `2026-07-28` removes protocol sessions. The Factory therefore returns `request_id` on every creation request. Every future stateful tool requires that explicit handle and authorizes it for the caller. The experimental Tasks extension is not advertised in v0.1 because the official Python SDK does not yet provide a stable implementation.
 
 ## Isolation model
 
 For local v0.1, each child has:
 
 ```text
-factory-home/
-  secrets/                 0700 parent
-    manager-token           0600
-    children/<slug>         0600
-  state/                    0700, non-secret SQLite
-  instances/<slug>/         non-secret validated manifest
-  runtime/<slug>/           0700 instance-local data
+~/.config/bot-factory/       non-secret configuration
+~/.local/share/bot-factory/
+  secrets/                   0700 parent
+    manager-token            0600
+    children/<slug>          0600
+  instances/<slug>/          non-secret validated manifest
+~/.local/state/bot-factory/
+  factory.sqlite             0600, non-secret state
+  runtime/<slug>/            0700 instance-local data
 ```
 
 The exact base path is configurable by trusted local setup, not by MCP. The worker rejects symlink escape, traversal, duplicate slug overwrite, and unrecognized profile names.
@@ -76,7 +78,7 @@ The exact base path is configurable by trusted local setup, not by MCP. The work
 | Capability | Design requirement | Legacy fallback |
 |---|---|---|
 | Stateless core / `server/discover` | modern remote mode and tests | local stdio compatibility path |
-| Tasks | return/maintain standard task when client advertises extension | `request_id` plus `factory_get_request` |
+| Tasks extension | do not advertise until its reference and Python implementation are stable and tested | `request_id` plus `factory_get_request` |
 | MRTR | optional `input_required` reminder to complete Telegram confirmation | ordinary safe status/result |
 | MCP Apps / subscriptions | optional profile picker/status card after host validation | complete Telegram/text UX |
 | OpenTelemetry | redacted correlated traces | redacted stderr logging |
@@ -88,6 +90,6 @@ The exact base path is configurable by trusted local setup, not by MCP. The work
 3. **Child-to-child leak:** unique secret and runtime boundaries; no parent environment inheritance.
 4. **Duplicate/ambiguous Telegram actions:** idempotency and reconciliation, never blind retry.
 5. **Public lead data:** collection notice, minimum data, owner-only access/export/purge, no data in MCP results or logs.
-6. **MRTR replay/tampering:** AEAD/HMAC protected state, short TTL, owner binding, request binding, and server-side single use.
+6. **MRTR replay/tampering:** AEAD-protected state, short TTL, request/audience and authenticated-principal binding, and server-side single use.
 
 For implementation-level requirements, see [SPECIFICATION.md](SPECIFICATION.md) and [ACCEPTANCE.md](ACCEPTANCE.md).

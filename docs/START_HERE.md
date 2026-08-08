@@ -1,6 +1,6 @@
-# Start Here: implementation handoff
+# Start Here: maintainer handoff
 
-This repository intentionally contains documentation before product code. The next agent should not create a generic Telegram/MCP skeleton first. The core Telegram capability must be proven in a disposable end-to-end spike.
+The blocking Telegram spike and implementation are complete. Preserve the proven flow and finish only the remaining external publication gates recorded in [STATUS.md](STATUS.md) and [PUBLICATION.md](PUBLICATION.md).
 
 ## Mission
 
@@ -9,6 +9,11 @@ Build a self-hosted MCP product where a user-owned Telegram manager bot creates 
 **The product is not:** a BotFather wrapper, an arbitrary AI-agent launcher, or a wrapper around a one-child gateway-onboarding flow.
 
 ## First task: Telegram capability spike (blocking)
+
+**Completed 2026-08-08 for the safe baseline.** See the redacted evidence in
+[`evidence/TELEGRAM_SPIKE_2026-08-08.md`](evidence/TELEGRAM_SPIKE_2026-08-08.md).
+The managed-child-as-manager question remains exploratory and does not block the
+separate-manager implementation.
 
 Create a minimal private experiment outside the release implementation. Use a disposable manager bot and disposable child bot. Never place tokens in source, shell history, terminal output, Git, chat, or test fixtures.
 
@@ -27,18 +32,18 @@ Prove and record only safe evidence for all of these:
 
 Stop product implementation and update `docs/DECISIONS.md` if Telegram does not support the required manager flow, token retrieval is not available as expected, or the ownership/confirmation semantics contradict this specification. Do not simulate success with invented updates.
 
-## Second task: create the minimal implementation shape
+## Implemented v0.1 shape
 
-Only after the spike passes:
+Completed after the spike passed:
 
-1. Create `pyproject.toml` for Python 3.11+, using a distribution name `telegram-managed-bot-factory` and a separate import package name chosen after checking naming conventions.
-2. Create typed domain models and a SQLite-backed non-secret state machine through TDD.
-3. Implement a local file `SecretStore` with enforced `0700` directories and `0600` files.
-4. Implement the persistent manager worker with durable polling offset and idempotent update matching.
-5. Implement one `owner_echo` isolated child runtime.
-6. Implement the stdio MCP control plane: preflight, create request, get request, list instances, start, stop.
-7. Add a fake Telegram API integration test before using a live token again.
-8. Add the three showcase profiles only after isolation works for `owner_echo`.
+1. Python 3.11–3.14 package and locked dependencies.
+2. Typed SQLite-backed non-secret state machine.
+3. Local `SecretStore` with verified `0700` directories and `0600` files.
+4. Persistent manager worker with durable offset and idempotent update matching.
+5. Isolated child runtime and four bounded built-in profiles.
+6. Six-tool dual-era MCP control plane.
+7. Fake Telegram integration and modern/legacy protocol acceptance tests.
+8. Linux setup, hardened user service, Hermes registration, and trusted release workflows.
 
 ## Non-negotiable invariants
 

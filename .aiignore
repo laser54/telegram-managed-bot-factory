@@ -1,0 +1,14 @@
+.env
+.env.*
+.venv/
+dist/
+build/
+*.sqlite
+*.sqlite3
+*.db
+*.log
+factory-home/
+factory-secrets/
+factory-state/
+runtime/
+

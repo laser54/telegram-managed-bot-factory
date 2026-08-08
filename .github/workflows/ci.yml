@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --frozen --group dev
+      - run: uv run ruff check .
+      - run: uv run mypy src
+      - run: uv run pytest -q
+
+  package-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --frozen --group dev
+      - run: uv run python scripts/scan_release.py --git-history src tests docs
+      - run: uv export --quiet --frozen --no-dev --no-emit-project --output-file requirements-audit.txt
+      - run: uv run pip-audit --requirement requirements-audit.txt
+      - run: uv build
+      - run: uv run twine check dist/*
+      - run: uv run python scripts/scan_release.py dist
+      - run: uv venv --python 3.12 .clean-install
+      - run: uv pip install --python .clean-install/bin/python dist/*.whl
+      - run: .clean-install/bin/python -c "import telegram_bot_factory; assert telegram_bot_factory.__version__ == '0.1.0'"

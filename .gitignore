@@ -1,32 +1,35 @@
-# Python
 __pycache__/
 *.py[cod]
-*.egg-info/
-.venv/
+.mypy_cache/
 .pytest_cache/
 .ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
+.venv/
+.venv-*/
+requirements-audit.txt
 dist/
 build/
+*.egg-info/
+.coverage
+htmlcov/
 
-# Local Factory state and secrets
+# Factory runtime and credentials must never enter Git.
+.env
+.env.*
+!.env.example
 factory-home/
-factory-state/
 factory-secrets/
+factory-state/
 instances/
 runtime/
 *.sqlite
 *.sqlite3
+*.db
+*.log
 
-# Environment and editor files
-.env
-.env.*
-!.env.example
+# Editors and operating system files.
 .vscode/
 .idea/
 .DS_Store
 
-# Test evidence must be redacted before intentional inclusion
+# Test evidence must be reviewed and explicitly added after redaction.
 artifacts/
