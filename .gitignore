@@ -4,6 +4,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .venv/
+.venv-*/
+requirements-audit.txt
 dist/
 build/
 *.egg-info/

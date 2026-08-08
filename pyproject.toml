@@ -24,7 +24,7 @@ classifiers = [
 ]
 dependencies = [
   "aiogram>=3.30,<4",
-  "cryptography>=45,<47",
+  "cryptography>=49,<51",
   "httpx>=0.28,<1",
   "mcp>=2,<3",
   "platformdirs>=4.3,<5",
