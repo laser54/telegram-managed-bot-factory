@@ -114,6 +114,16 @@ class FactoryState:
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS runtime_commands (
+                    command_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    slug TEXT NOT NULL REFERENCES instances(slug),
+                    action TEXT NOT NULL CHECK(action IN ('start', 'stop')),
+                    status TEXT NOT NULL CHECK(status IN ('pending', 'complete', 'failed')),
+                    requested_at TEXT NOT NULL,
+                    completed_at TEXT
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS one_pending_runtime_command
+                    ON runtime_commands(slug) WHERE status = 'pending';
                 """
             )
         self.database_path.chmod(0o600)
@@ -287,6 +297,49 @@ class FactoryState:
                 "SELECT count(*) AS total FROM reconciliation_events"
             ).fetchone()
         return 0 if row is None else int(row["total"])
+
+    def set_worker_heartbeat(self, occurred_at: datetime | None = None) -> None:
+        value = (occurred_at or datetime.now(UTC)).isoformat()
+        self.initialize()
+        with self._connection() as connection:
+            connection.execute(
+                """INSERT INTO metadata (key, value) VALUES ('worker_heartbeat', ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value""",
+                (value,),
+            )
+
+    def worker_heartbeat(self) -> datetime | None:
+        self.initialize()
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT value FROM metadata WHERE key = 'worker_heartbeat'"
+            ).fetchone()
+        return None if row is None else datetime.fromisoformat(row["value"])
+
+    def request_count(self, state: RequestState) -> int:
+        self.initialize()
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT count(*) AS total FROM requests WHERE state = ?", (state.value,)
+            ).fetchone()
+        return 0 if row is None else int(row["total"])
+
+    def enqueue_runtime_command(self, slug: str, action: str) -> None:
+        if action not in {"start", "stop"}:
+            raise StateError("Runtime action is invalid.")
+        self.initialize()
+        try:
+            with self._connection() as connection:
+                connection.execute(
+                    """INSERT INTO runtime_commands
+                    (slug, action, status, requested_at)
+                    VALUES (?, ?, 'pending', ?)""",
+                    (slug, action, datetime.now(UTC).isoformat()),
+                )
+        except sqlite3.IntegrityError as error:
+            raise StateError(
+                "A runtime action is already pending or instance is unknown."
+            ) from error
 
     def upsert_instance(self, instance: InstanceRecord) -> None:
         self.initialize()
