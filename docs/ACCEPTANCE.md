@@ -1,0 +1,58 @@
+# v0.1 acceptance criteria
+
+A checkbox means **evidence exists**: automated output, a safe live result, or a reviewed artifact. A feature mentioned only in prose is not complete.
+
+## A. Telegram foundation
+
+- [ ] A live disposable user-owned manager bot was verified with `can_manage_bots == true`.
+- [ ] The current managed-bot creation confirmation link was verified with Telegram.
+- [ ] The real `managed_bot` update was recorded as a redacted fixture/schema.
+- [ ] The worker retrieved a child token only after owner confirmation, without a secret leak.
+- [ ] Duplicate/mismatched/late update paths are idempotent or enter `reconciliation_required`.
+- [ ] A disposable child ran and returned a safe `/health` response.
+
+## B. Secrets and isolation
+
+- [ ] Setup accepts manager credential only via hidden local input; no CLI `--token` argument exists.
+- [ ] Secret directories/files have verified owner-only permissions.
+- [ ] SQLite state, manifests, logs, traces, exception rendering, test output, wheel, sdist, Git history, and CI artifacts contain no secrets.
+- [ ] Each child process receives only its own credential; manager credential is not inherited.
+- [ ] Path traversal, symlink escape, duplicate slug overwrite, and arbitrary executable/profile selection are rejected.
+
+## C. MCP product contract
+
+- [ ] Safe default allowlist is exactly `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, and `factory_stop_instance`.
+- [ ] Tool input/output uses strict Pydantic/JSON Schema 2020-12 models and returns structured safe status.
+- [ ] Creation returns durable explicit `request_id`; `factory_get_request` works after an MCP client/process restart.
+- [ ] Modern test client verifies `server/discover`, stateless Streamable HTTP, header validation, deterministic catalog, private cache hints, and trace redaction.
+- [ ] Modern test client verifies Tasks extension create/get/update/cancel authorization.
+- [ ] Modern test client verifies MRTR happy path plus expiry, principal mismatch, tamper, and replay rejection.
+- [ ] Current Hermes compatibility is demonstrated by `hermes mcp test bot-factory` and one safe `factory_preflight` call; unsupported modern features degrade gracefully.
+
+## D. Useful child profiles
+
+- [ ] `owner_echo` proves owner-only response and isolated runtime health.
+- [ ] `quick_faq` launches from validated instance-local content and serves 3–8 FAQ entries with no remote fetch or HTML injection.
+- [ ] `lead_inbox` displays a data notice, collects minimum data, notifies only its owner, and offers owner-confirmed export/purge.
+- [ ] `link_inbox` is owner-only and stores links/notes without fetching/executing URLs.
+- [ ] Every profile returns safe `/health` and has a deterministic test suite.
+
+## E. Operator experience
+
+- [ ] `bot-factory install-hermes` completes user-level installation without editing Hermes YAML in the happy path.
+- [ ] Setup checks manager identity, management mode, owner policy, secret store, and worker readiness before start.
+- [ ] A new child needs no more than one Telegram confirmation action from the owner.
+- [ ] Statuses are human-readable and never show raw updates, stack traces, tokens, internal paths/hosts, or unnecessary IDs.
+- [ ] Main `quick_faq` demo completes in 60–90 seconds and visibly answers an FAQ question.
+- [ ] README demonstrates `lead_inbox` and `link_inbox` as two additional short value scenarios.
+
+## F. Release and publication
+
+- [ ] `pytest`, `ruff check .`, type check, package secret scan, and dependency/security scan are green in CI.
+- [ ] `python -m build` produces wheel and sdist from a clean checkout; `twine check dist/*` passes.
+- [ ] Clean virtual environment install works from TestPyPI before production PyPI.
+- [ ] Package metadata, README rendering, LICENSE, CHANGELOG, SECURITY, CONTRIBUTING, and Code of Conduct are complete.
+- [ ] PyPI name is rechecked immediately before upload; prior 404 is not treated as reservation.
+- [ ] GitHub Actions uses PyPI Trusted Publishing OIDC with a protected environment, not a long-lived API token.
+- [ ] `server.json` is validated against the current Official MCP Registry schema only after real package/version values exist.
+- [ ] Public release claims are made only after public GitHub source, PyPI release, and live E2E evidence exist.

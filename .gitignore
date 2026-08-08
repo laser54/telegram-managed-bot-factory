@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Local Factory state and secrets
+factory-home/
+factory-state/
+factory-secrets/
+instances/
+runtime/
+*.sqlite
+*.sqlite3
+
+# Environment and editor files
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+
+# Test evidence must be redacted before intentional inclusion
+artifacts/
