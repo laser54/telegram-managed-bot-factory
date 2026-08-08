@@ -13,8 +13,19 @@ from pathlib import Path
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
 
-from telegram_bot_factory.models import ProfileName
-from telegram_bot_factory.profiles import OwnerEchoProfile
+from telegram_bot_factory.models import (
+    LeadInboxConfig,
+    ProfileName,
+    QuickFaqConfig,
+)
+from telegram_bot_factory.profile_store import ProfileStore
+from telegram_bot_factory.profiles import (
+    ChildProfile,
+    LeadInboxProfile,
+    LinkInboxProfile,
+    OwnerEchoProfile,
+    QuickFaqProfile,
+)
 from telegram_bot_factory.runtime import InstanceLauncher
 
 
@@ -48,12 +59,10 @@ def write_health(runtime_dir: Path, status: str) -> None:
 
 async def run_child(token_fd: int, manifest_path: Path, runtime_dir: Path) -> None:
     manifest = InstanceLauncher.load_manifest(manifest_path)
-    if manifest.profile is not ProfileName.OWNER_ECHO:
-        raise RuntimeError("Unsupported child profile.")
     credential = read_token_fd(token_fd)
     bot = Bot(token=credential)
     credential = ""
-    profile = OwnerEchoProfile(manifest.owner_telegram_id, str(manifest.slug))
+    profile = build_profile(manifest, runtime_dir)
     offset = 0
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
@@ -76,12 +85,42 @@ async def run_child(token_fd: int, manifest_path: Path, runtime_dir: Path) -> No
                 message = update.message
                 if message is None or message.from_user is None or message.text is None:
                     continue
-                reply = profile.handle(message.from_user.id, message.text)
-                if reply is not None:
-                    await bot.send_message(message.chat.id, reply.text)
+                replies = profile.handle(message.from_user.id, message.text)
+                for reply in replies:
+                    target = (
+                        message.chat.id
+                        if reply.target == "sender"
+                        else manifest.owner_telegram_id
+                    )
+                    await bot.send_message(target, reply.text)
     finally:
         write_health(runtime_dir, "stopped")
         await bot.session.close()
+
+
+def build_profile(manifest: object, runtime_dir: Path) -> ChildProfile:
+    from telegram_bot_factory.runtime import InstanceManifest
+
+    if not isinstance(manifest, InstanceManifest):
+        raise RuntimeError("Instance manifest is invalid.")
+    if manifest.profile is ProfileName.OWNER_ECHO:
+        return OwnerEchoProfile(manifest.owner_telegram_id, str(manifest.slug))
+    if manifest.profile is ProfileName.QUICK_FAQ and isinstance(
+        manifest.profile_config, QuickFaqConfig
+    ):
+        return QuickFaqProfile(manifest.profile_config)
+    store = ProfileStore(runtime_dir)
+    if manifest.profile is ProfileName.LEAD_INBOX and isinstance(
+        manifest.profile_config, LeadInboxConfig
+    ):
+        return LeadInboxProfile(
+            manifest.owner_telegram_id,
+            manifest.profile_config.privacy_notice,
+            store,
+        )
+    if manifest.profile is ProfileName.LINK_INBOX:
+        return LinkInboxProfile(manifest.owner_telegram_id, store)
+    raise RuntimeError("Unsupported child profile configuration.")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -100,4 +139,3 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
-
