@@ -71,10 +71,21 @@ class ManagerWorker:
             offset = self._state.advance_polling_offset(event.update_id + 1)
         return offset
 
+    async def dispatch_pending_notifications(self) -> None:
+        for request in self._state.pending_notifications():
+            try:
+                await self.notify_confirmation(request)
+            except TelegramError:
+                self._state.record_notification_attempt(request.request_id, sent=False)
+            else:
+                self._state.record_notification_attempt(request.request_id, sent=True)
+
     async def run(self, stop: asyncio.Event, poll_timeout_seconds: int = 20) -> None:
         await self.preflight()
         while not stop.is_set():
+            self._state.set_worker_heartbeat()
             try:
+                await self.dispatch_pending_notifications()
                 await self.poll_once(poll_timeout_seconds)
             except TelegramError:
                 await asyncio.sleep(1)

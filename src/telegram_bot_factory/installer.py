@@ -1,0 +1,66 @@
+"""One-line user installer for Hermes and the Linux worker."""
+
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+from telegram_bot_factory import __version__
+from telegram_bot_factory.paths import FactoryPaths
+from telegram_bot_factory.systemd import install_user_service
+
+
+class InstallError(RuntimeError):
+    """Safe installation failure."""
+
+
+def _required_command(name: str) -> str:
+    value = shutil.which(name)
+    if value is None:
+        raise InstallError(f"Required command {name!r} is unavailable.")
+    return value
+
+
+def install_for_hermes(paths: FactoryPaths | None = None) -> None:
+    if os.name != "posix":
+        raise InstallError("v0.1 installation supports Linux only.")
+    uv = _required_command("uv")
+    hermes = _required_command("hermes")
+    package = f"telegram-managed-bot-factory=={__version__}"
+    try:
+        subprocess.run([uv, "tool", "install", "--force", package], check=True)  # noqa: S603
+        bin_result = subprocess.run(  # noqa: S603
+            [uv, "tool", "dir", "--bin"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        bin_dir = Path(bin_result.stdout.strip()).resolve()
+        manager = bin_dir / "bot-factory-manager"
+        operator = bin_dir / "bot-factory"
+        mcp_command = bin_dir / "bot-factory-mcp"
+        for executable in (manager, operator, mcp_command):
+            if not executable.is_file():
+                raise InstallError("Installed Factory entry points are unavailable.")
+        subprocess.run([str(operator), "setup"], check=True)  # noqa: S603
+        subprocess.run(  # noqa: S603
+            [
+                hermes,
+                "mcp",
+                "add",
+                "bot-factory",
+                "--command",
+                str(mcp_command),
+            ],
+            input="y\ny\n",
+            text=True,
+            check=True,
+        )
+        trusted_paths = paths or FactoryPaths.discover()
+        install_user_service(manager, trusted_paths)
+        subprocess.run([hermes, "mcp", "test", "bot-factory"], check=True)  # noqa: S603
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise InstallError("Factory installation did not complete safely.") from error
+

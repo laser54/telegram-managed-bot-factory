@@ -123,3 +123,15 @@ async def test_runtime_activation_creates_inventory_record(tmp_path: Path) -> No
     assert state.get_request(request.request_id).state is RequestState.ACTIVE  # type: ignore[union-attr]
     assert state.get_instance("owner_echo").health == "healthy"  # type: ignore[union-attr]
     assert launcher.requests == [request]
+
+
+@pytest.mark.asyncio
+async def test_owner_notification_is_attempted_once(tmp_path: Path) -> None:
+    worker, state, _, telegram = make_worker(tmp_path)
+    request = make_request()
+    state.create_request(request)
+
+    await worker.dispatch_pending_notifications()
+    await worker.dispatch_pending_notifications()
+
+    assert len(telegram.notifications) == 1

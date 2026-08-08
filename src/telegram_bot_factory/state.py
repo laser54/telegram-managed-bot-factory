@@ -17,6 +17,7 @@ from telegram_bot_factory.models import (
     ProfileConfig,
     ProfileName,
     RequestState,
+    RuntimeCommand,
 )
 
 PROFILE_CONFIG_ADAPTER: TypeAdapter[ProfileConfig] = TypeAdapter(ProfileConfig)
@@ -124,6 +125,11 @@ class FactoryState:
                 );
                 CREATE UNIQUE INDEX IF NOT EXISTS one_pending_runtime_command
                     ON runtime_commands(slug) WHERE status = 'pending';
+                CREATE TABLE IF NOT EXISTS request_notifications (
+                    request_id TEXT PRIMARY KEY REFERENCES requests(request_id),
+                    status TEXT NOT NULL CHECK(status IN ('sent', 'unknown')),
+                    attempted_at TEXT NOT NULL
+                );
                 """
             )
         self.database_path.chmod(0o600)
@@ -195,6 +201,33 @@ class FactoryState:
                 (owner_telegram_id, RequestState.PENDING_CONFIRMATION.value),
             ).fetchall()
         return [self._request_from_row(row) for row in rows]
+
+    def pending_notifications(self) -> list[FactoryRequest]:
+        self.initialize()
+        with self._connection() as connection:
+            rows = connection.execute(
+                """SELECT requests.* FROM requests
+                LEFT JOIN request_notifications USING(request_id)
+                WHERE requests.state = ?
+                  AND requests.notify_owner = 1
+                  AND request_notifications.request_id IS NULL
+                ORDER BY requests.created_at, requests.request_id""",
+                (RequestState.PENDING_CONFIRMATION.value,),
+            ).fetchall()
+        return [self._request_from_row(row) for row in rows]
+
+    def record_notification_attempt(self, request_id: UUID, *, sent: bool) -> None:
+        self.initialize()
+        status = "sent" if sent else "unknown"
+        try:
+            with self._connection() as connection:
+                connection.execute(
+                    """INSERT INTO request_notifications
+                    (request_id, status, attempted_at) VALUES (?, ?, ?)""",
+                    (str(request_id), status, datetime.now(UTC).isoformat()),
+                )
+        except sqlite3.IntegrityError as error:
+            raise StateError("Notification was already attempted.") from error
 
     def transition(
         self, request_id: UUID, target: RequestState, safe_reason: str | None = None
@@ -340,6 +373,52 @@ class FactoryState:
             raise StateError(
                 "A runtime action is already pending or instance is unknown."
             ) from error
+
+    def pending_runtime_commands(self) -> list[RuntimeCommand]:
+        self.initialize()
+        with self._connection() as connection:
+            rows = connection.execute(
+                """SELECT command_id, slug, action FROM runtime_commands
+                WHERE status = 'pending' ORDER BY command_id"""
+            ).fetchall()
+        return [
+            RuntimeCommand(
+                command_id=int(row["command_id"]),
+                slug=row["slug"],
+                action=row["action"],
+            )
+            for row in rows
+        ]
+
+    def complete_runtime_command(self, command_id: int, *, succeeded: bool) -> None:
+        self.initialize()
+        status = "complete" if succeeded else "failed"
+        with self._connection() as connection:
+            cursor = connection.execute(
+                """UPDATE runtime_commands SET status = ?, completed_at = ?
+                WHERE command_id = ? AND status = 'pending'""",
+                (status, datetime.now(UTC).isoformat(), command_id),
+            )
+        if cursor.rowcount != 1:
+            raise StateError("Runtime command is no longer pending.")
+
+    def update_instance_lifecycle(
+        self,
+        slug: str,
+        state: RequestState,
+        health: str,
+    ) -> None:
+        if health not in {"unknown", "healthy", "stopped", "failed"}:
+            raise StateError("Instance health is invalid.")
+        self.initialize()
+        with self._connection() as connection:
+            cursor = connection.execute(
+                """UPDATE instances SET state = ?, health = ?, updated_at = ?
+                WHERE slug = ?""",
+                (state.value, health, datetime.now(UTC).isoformat(), slug),
+            )
+        if cursor.rowcount != 1:
+            raise StateError("Instance does not exist.")
 
     def upsert_instance(self, instance: InstanceRecord) -> None:
         self.initialize()

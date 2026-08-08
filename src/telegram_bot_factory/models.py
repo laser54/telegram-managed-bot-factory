@@ -132,3 +132,9 @@ class InstanceRecord(StrictModel):
     health: Literal["unknown", "healthy", "stopped", "failed"] = "unknown"
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
+
+
+class RuntimeCommand(StrictModel):
+    command_id: int = Field(gt=0)
+    slug: Slug
+    action: Literal["start", "stop"]

@@ -146,6 +146,13 @@ class InstanceLauncher:
         process = self._processes.get(str(slug))
         return process is not None and process.poll() is None
 
+    def shutdown(self) -> None:
+        for raw_slug in list(self._processes):
+            try:
+                self.stop(raw_slug)
+            except RuntimeProvisionError:
+                continue
+
     @staticmethod
     def _child_environment() -> dict[str, str]:
         environment = {"PYTHONUNBUFFERED": "1"}
