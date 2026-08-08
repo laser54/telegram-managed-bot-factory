@@ -1,5 +1,6 @@
 from telegram_bot_factory.models import FactoryRequest
 from telegram_bot_factory.telegram import ManagedBotEvent, ManagerIdentity, TelegramError
+from tests.sentinels import token_shaped_sentinel
 
 
 class FakeRuntimeLauncher:
@@ -15,7 +16,7 @@ class FakeTelegramGateway:
     def __init__(self) -> None:
         self.identity = ManagerIdentity(100, "factory_manager_bot", True)
         self.events: list[ManagedBotEvent] = []
-        self.credential = "REDACTED_TOKEN_SHAPE"
+        self.credential = token_shaped_sentinel("TEST_SENTINEL_CHILD")
         self.token_calls = 0
         self.notifications: list[tuple[int, str]] = []
         self.credential_error: TelegramError | None = None

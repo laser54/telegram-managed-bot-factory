@@ -8,9 +8,15 @@ from typing import Any, Literal
 from uuid import UUID
 
 from mcp.server import MCPServer
-from mcp.server.mcpserver import Context
+from mcp.server.mcpserver import Context, RequestStateSecurity
 from mcp.server.mcpserver.exceptions import ToolError
-from mcp_types import CallToolResult, InputRequiredResult
+from mcp_types import (
+    CallToolResult,
+    ElicitRequest,
+    ElicitRequestFormParams,
+    ElicitResult,
+    InputRequiredResult,
+)
 from mcp_types import Tool as MCPTool
 
 from telegram_bot_factory import __version__
@@ -25,6 +31,7 @@ from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.service import (
     FactoryService,
+    FactoryServiceError,
     InstanceListResult,
     PreflightResult,
     RequestResult,
@@ -56,13 +63,18 @@ class StrictSchemaMCPServer(MCPServer[None]):
         return await super().call_tool(name, arguments, context)
 
 
-def create_mcp_server(service: FactoryService) -> MCPServer[None]:
+def create_mcp_server(
+    service: FactoryService,
+    *,
+    request_state_security: RequestStateSecurity | None = None,
+) -> MCPServer[None]:
     server: MCPServer[None] = StrictSchemaMCPServer(
         name="bot-factory",
         title="Bot Factory for Telegram Managed Bots",
         description="Provision owner-confirmed isolated Telegram bot instances.",
         instructions="Never request or return Telegram credentials.",
         version=__version__,
+        request_state_security=request_state_security,
     )
 
     @server.tool(name="factory_preflight", structured_output=True)
@@ -71,7 +83,7 @@ def create_mcp_server(service: FactoryService) -> MCPServer[None]:
         return service.preflight()
 
     @server.tool(name="factory_create_request", structured_output=True)
-    def factory_create_request(
+    async def factory_create_request(
         display_name: DisplayName,
         username: BotUsername,
         slug: Slug,
@@ -79,8 +91,38 @@ def create_mcp_server(service: FactoryService) -> MCPServer[None]:
         owner_telegram_id: int,
         purpose: str | None = None,
         notify_owner: bool = True,
-    ) -> RequestResult:
+        ctx: Context[None, Any] | None = None,
+    ) -> RequestResult | InputRequiredResult:
         """Create a durable request and return the required Telegram confirmation link."""
+        if ctx is not None and ctx.protocol_version == "2026-07-28":
+            if ctx.request_state is None:
+                return InputRequiredResult(
+                    input_requests={
+                        "telegram_confirmation": ElicitRequest(
+                            params=ElicitRequestFormParams(
+                                message=(
+                                    "Confirm that Telegram will require a separate, "
+                                    "out-of-band bot creation approval."
+                                ),
+                                requested_schema={
+                                    "type": "object",
+                                    "properties": {"acknowledged": {"type": "boolean"}},
+                                    "required": ["acknowledged"],
+                                    "additionalProperties": False,
+                                },
+                            )
+                        )
+                    },
+                    request_state=service.issue_mrtr_round(),
+                )
+            response = (ctx.input_responses or {}).get("telegram_confirmation")
+            if not (
+                isinstance(response, ElicitResult)
+                and response.action == "accept"
+                and response.content == {"acknowledged": True}
+            ):
+                raise FactoryServiceError("Telegram confirmation acknowledgement is required.")
+            service.consume_mrtr_round(ctx.request_state)
         return service.create_request(
             display_name,
             username,

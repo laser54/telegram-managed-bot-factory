@@ -9,13 +9,14 @@ from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.service import FactoryService, FactoryServiceError
 from telegram_bot_factory.state import FactoryState
+from tests.sentinels import token_shaped_sentinel
 
 
 def ready_service(tmp_path: Path) -> FactoryService:
     paths = FactoryPaths.under(tmp_path)
     state = FactoryState(paths.database_path)
     secrets = LocalFileSecretStore(paths)
-    secrets.write_manager("REDACTED_TOKEN_SHAPE")
+    secrets.write_manager(token_shaped_sentinel("TEST_SENTINEL_MANAGER"))
     state.set_worker_heartbeat(datetime.now(UTC))
     config = FactoryConfig(
         manager_username="factory_manager_bot",
@@ -61,4 +62,3 @@ def test_preflight_never_contains_owner_or_credential(tmp_path: Path) -> None:
     assert "TEST_SENTINEL" not in result
     assert "42" not in result
     assert "manager_user_id" not in result
-

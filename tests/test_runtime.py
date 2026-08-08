@@ -8,8 +8,9 @@ from telegram_bot_factory.models import CreateRequest, FactoryRequest, OwnerEcho
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.runtime import InstanceLauncher, RuntimeProvisionError
 from telegram_bot_factory.secrets import LocalFileSecretStore
+from tests.sentinels import token_shaped_sentinel
 
-SENTINEL = "REDACTED_TOKEN_SHAPE"
+SENTINEL = token_shaped_sentinel("TEST_SENTINEL_CHILD")
 
 
 def make_request() -> FactoryRequest:

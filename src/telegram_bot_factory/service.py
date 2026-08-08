@@ -140,6 +140,15 @@ class FactoryService:
             raise FactoryServiceError("Requested username or slug already exists.") from error
         return self._request_result(request)
 
+    def issue_mrtr_round(self) -> str:
+        return self._state.issue_mrtr_round()
+
+    def consume_mrtr_round(self, nonce: str) -> None:
+        try:
+            self._state.consume_mrtr_round(nonce)
+        except StateError as error:
+            raise FactoryServiceError("Confirmation state is invalid or expired.") from error
+
     def get_request(self, request_id: UUID) -> RequestResult:
         request = self._state.get_request(request_id)
         if request is None:
@@ -227,4 +236,3 @@ class FactoryService:
             status="No automatic action is pending.",
             next_action="none",
         )
-

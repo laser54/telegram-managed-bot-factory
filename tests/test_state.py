@@ -9,6 +9,7 @@ from telegram_bot_factory.models import (
     RequestState,
 )
 from telegram_bot_factory.state import FactoryState, StateError
+from tests.sentinels import token_shaped_sentinel
 
 
 def make_request() -> FactoryRequest:
@@ -62,5 +63,6 @@ def test_polling_offset_never_moves_backwards(tmp_path: Path) -> None:
 def test_secret_sentinel_is_absent_from_state(tmp_path: Path) -> None:
     store = FactoryState(tmp_path / "factory.sqlite")
     store.create_request(make_request())
-    assert b"REDACTED_TOKEN_SHAPE" not in store.database_path.read_bytes()
-
+    assert token_shaped_sentinel("TEST_SENTINEL_STATE").encode() not in (
+        store.database_path.read_bytes()
+    )

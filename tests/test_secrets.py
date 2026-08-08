@@ -7,8 +7,9 @@ import pytest
 from telegram_bot_factory.models import Slug
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore, SecretStoreError
+from tests.sentinels import token_shaped_sentinel
 
-SENTINEL = "REDACTED_TOKEN_SHAPE"
+SENTINEL = token_shaped_sentinel("TEST_SENTINEL_SECRET")
 
 
 def test_manager_and_child_round_trip(tmp_path: Path) -> None:
@@ -57,4 +58,3 @@ def test_symlink_destination_is_rejected(tmp_path: Path) -> None:
     with pytest.raises(SecretStoreError):
         store.write_manager(SENTINEL, overwrite=True)
     assert target.read_text(encoding="utf-8") == "do not replace"
-

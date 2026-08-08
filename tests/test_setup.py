@@ -7,8 +7,9 @@ import telegram_bot_factory.setup as factory_setup
 from telegram_bot_factory.config import read_factory_config
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
+from tests.sentinels import token_shaped_sentinel
 
-SENTINEL = "REDACTED_TOKEN_SHAPE"
+SENTINEL = token_shaped_sentinel("TEST_SENTINEL_MANAGER")
 
 
 class FakeSession:

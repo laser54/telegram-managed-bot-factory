@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import secrets
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID
 
@@ -130,6 +131,11 @@ class FactoryState:
                     status TEXT NOT NULL CHECK(status IN ('sent', 'unknown')),
                     attempted_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS mrtr_rounds (
+                    nonce TEXT PRIMARY KEY,
+                    expires_at TEXT NOT NULL,
+                    consumed_at TEXT
+                );
                 """
             )
         self.database_path.chmod(0o600)
@@ -158,6 +164,36 @@ class FactoryState:
                 )
         except sqlite3.IntegrityError as error:
             raise StateError("Request username, slug, or identifier already exists.") from error
+
+    def issue_mrtr_round(self, *, ttl_seconds: int = 300) -> str:
+        """Create opaque, durable, short-lived state for one modern MCP retry."""
+        if not 1 <= ttl_seconds <= 600:
+            raise StateError("MRTR lifetime is invalid.")
+        self.initialize()
+        nonce = secrets.token_urlsafe(24)
+        expires_at = datetime.now(UTC) + timedelta(seconds=ttl_seconds)
+        with self._connection() as connection:
+            connection.execute(
+                "INSERT INTO mrtr_rounds (nonce, expires_at) VALUES (?, ?)",
+                (nonce, expires_at.isoformat()),
+            )
+        return nonce
+
+    def consume_mrtr_round(self, nonce: str) -> None:
+        """Atomically consume state; expired, unknown, and replayed values are identical."""
+        if not nonce or len(nonce) > 128:
+            raise StateError("MRTR state is invalid or expired.")
+        self.initialize()
+        now = datetime.now(UTC)
+        with self._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            cursor = connection.execute(
+                """UPDATE mrtr_rounds SET consumed_at = ?
+                WHERE nonce = ? AND consumed_at IS NULL AND expires_at >= ?""",
+                (now.isoformat(), nonce, now.isoformat()),
+            )
+        if cursor.rowcount != 1:
+            raise StateError("MRTR state is invalid or expired.")
 
     def get_request(self, request_id: UUID) -> FactoryRequest | None:
         self.initialize()
