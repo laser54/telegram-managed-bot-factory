@@ -10,6 +10,11 @@ Build a self-hosted MCP product where a user-owned Telegram manager bot creates 
 
 ## First task: Telegram capability spike (blocking)
 
+**Completed 2026-08-08 for the safe baseline.** See the redacted evidence in
+[`evidence/TELEGRAM_SPIKE_2026-08-08.md`](evidence/TELEGRAM_SPIKE_2026-08-08.md).
+The managed-child-as-manager question remains exploratory and does not block the
+separate-manager implementation.
+
 Create a minimal private experiment outside the release implementation. Use a disposable manager bot and disposable child bot. Never place tokens in source, shell history, terminal output, Git, chat, or test fixtures.
 
 Prove and record only safe evidence for all of these:

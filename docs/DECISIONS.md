@@ -18,12 +18,16 @@
 
 | Assumption | Required evidence | Status |
 |---|---|---|
-| Managed-bot manager setup works for a user-owned bot | live `getMe.can_manage_bots` | unverified |
-| Deep-link, update, and token retrieval match design | redacted disposable E2E | unverified |
-| A managed child can become a manager itself | live disposable experiment | unverified; not needed for safe baseline |
-| Current Hermes can use latest MCP features | actual negotiated/client integration tests | unverified; current installed dependency is legacy `mcp 1.28.1` |
+| Managed-bot manager setup works for a user-owned bot | live `getMe.can_manage_bots` | verified 2026-08-08; see `docs/evidence/TELEGRAM_SPIKE_2026-08-08.md` |
+| Deep-link, update, and token retrieval match design | redacted disposable E2E | verified 2026-08-08; update fields were `bot` and `user` |
+| A managed child can become a manager itself | live disposable experiment | partially explored: false by default; enabling it later remains unverified and is not needed for the safe baseline |
+| Current Hermes can use latest MCP features | actual negotiated/client integration tests | unverified; the local Hermes 0.18.0 environment currently has legacy `mcp 1.26.0` |
 | `hermes mcp test bot-factory` syntax/behavior meets intended flow | real CLI run after server exists | unverified |
 | Official MCP Registry schema/version at release time | validate current schema before submission | unverified |
+
+The live spike also confirmed that the manager must remain separate from the
+Hermes gateway identity: the test used an exclusive disposable manager and did
+not attempt to run competing `getUpdates` consumers on one credential.
 
 ## Explicit non-goals for v0.1
 

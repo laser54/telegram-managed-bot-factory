@@ -4,12 +4,12 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 
 ## A. Telegram foundation
 
-- [ ] A live disposable user-owned manager bot was verified with `can_manage_bots == true`.
-- [ ] The current managed-bot creation confirmation link was verified with Telegram.
-- [ ] The real `managed_bot` update was recorded as a redacted fixture/schema.
-- [ ] The worker retrieved a child token only after owner confirmation, without a secret leak.
+- [x] A live disposable user-owned manager bot was verified with `can_manage_bots == true`.
+- [x] The current managed-bot creation confirmation link was verified with Telegram.
+- [x] The real `managed_bot` update was recorded as a redacted fixture/schema.
+- [x] The disposable worker retrieved a child token only after owner confirmation, without a secret leak.
 - [ ] Duplicate/mismatched/late update paths are idempotent or enter `reconciliation_required`.
-- [ ] A disposable child ran and returned a safe `/health` response.
+- [x] A disposable child ran and returned a safe `/health` response.
 
 ## B. Secrets and isolation
 

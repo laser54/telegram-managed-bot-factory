@@ -3,10 +3,10 @@
 ## Current state
 
 - **Repository:** private design/planning repository.
-- **Code:** not started by design.
+- **Code:** not started; the blocking Telegram capability spike has passed.
 - **Distribution:** not published; no package is installed from PyPI.
 - **Official MCP Registry:** not submitted.
-- **Telegram live E2E:** not yet run.
+- **Telegram live E2E:** core managed-bot flow verified with disposable bots on 2026-08-08; safe evidence is in `docs/evidence/TELEGRAM_SPIKE_2026-08-08.md`.
 - **Hermes integration:** not yet run against this product.
 
 ## Name check performed during bootstrap
@@ -17,7 +17,7 @@ This check is evidence of availability at that moment only. PyPI package names a
 
 ## Next milestone
 
-Complete the disposable Telegram Managed Bots capability spike in [START_HERE.md](START_HERE.md). It is the only approved next implementation step.
+Create the minimal implementation shape described in [START_HERE.md](START_HERE.md), beginning with typed domain models and the non-secret state machine.
 
 ## Before making the repository public
 

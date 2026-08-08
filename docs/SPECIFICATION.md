@@ -402,7 +402,7 @@ active → stopped → retired
 
 ### MCP 2026-07-28: progressive-modern strategy
 
-Проект обязан использовать применимые возможности MCP `2026-07-28`, но без фальшивого заявления, что каждый host уже умеет их. На 2026-08-08 установленный Hermes содержит Python `mcp` 1.28.1; поэтому v0.1 обязан иметь legacy stdio fallback, а modern capabilities включаются только после capability negotiation и отдельной реальной проверки.
+Проект обязан использовать применимые возможности MCP `2026-07-28`, но без фальшивого заявления, что каждый host уже умеет их. На 2026-08-08 локальный Hermes 0.18.0 содержит Python `mcp` 1.26.0; поэтому v0.1 обязан иметь legacy stdio fallback, а modern capabilities включаются только после capability negotiation и отдельной реальной проверки.
 
 **Обязательная modern baseline:** официальный Python MCP SDK v2+ в package, dual-era transport tests, explicit request/task handles вместо session state, `server/discover`, strict JSON Schema 2020-12, structured output, Streamable HTTP modern-mode test, MRTR test, Tasks extension test, redacted OpenTelemetry trace propagation. Внешний продукт не считается готовым, если эти вещи только упомянуты в README и не выполнены проверяемо в tests/demo.
 

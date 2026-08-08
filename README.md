@@ -4,7 +4,7 @@
 
 Configure one Telegram manager bot once. Then ask Hermes to create a focused child bot, confirm once in Telegram, and let the Factory retrieve the child credential directly from Telegram, isolate its runtime, and start a useful bot profile.
 
-> **Status: private design repository; no working release yet.** Nothing in this repository is currently published to PyPI or the Official MCP Registry. See [docs/STATUS.md](docs/STATUS.md).
+> **Status: private implementation repository; no working release yet.** The blocking Telegram Managed Bots spike passed on 2026-08-08, but no package is currently published to PyPI or the Official MCP Registry. See [docs/STATUS.md](docs/STATUS.md).
 
 <!-- mcp-name: io.github.laser54/bot-factory -->
 
@@ -121,7 +121,7 @@ Start with these documents in order:
 
 ## Contributing
 
-There is no implementation branch yet. Do not start with a generic scaffold. First complete the live Telegram Managed Bots spike described in [START_HERE.md](docs/START_HERE.md); it determines whether the product's core assumptions hold.
+The live Telegram Managed Bots spike described in [START_HERE.md](docs/START_HERE.md) has passed for the separate-manager baseline. Implementation must continue in the documented order and preserve its secret and isolation boundaries.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
