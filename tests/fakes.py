@@ -1,4 +1,14 @@
+from telegram_bot_factory.models import FactoryRequest
 from telegram_bot_factory.telegram import ManagedBotEvent, ManagerIdentity, TelegramError
+
+
+class FakeRuntimeLauncher:
+    def __init__(self) -> None:
+        self.requests: list[FactoryRequest] = []
+
+    def materialize_and_start(self, request: FactoryRequest) -> object:
+        self.requests.append(request)
+        return object()
 
 
 class FakeTelegramGateway:

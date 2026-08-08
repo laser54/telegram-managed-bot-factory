@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 
-from telegram_bot_factory.models import FactoryRequest, RequestState
+from telegram_bot_factory.models import FactoryRequest, InstanceRecord, RequestState
+from telegram_bot_factory.runtime import RuntimeLauncher, RuntimeProvisionError
 from telegram_bot_factory.secrets import LocalFileSecretStore, SecretStoreError
 from telegram_bot_factory.state import FactoryState, StateError
 from telegram_bot_factory.telegram import (
@@ -33,10 +34,12 @@ class ManagerWorker:
         state: FactoryState,
         secrets: LocalFileSecretStore,
         telegram: TelegramGateway,
+        launcher: RuntimeLauncher | None = None,
     ) -> None:
         self._state = state
         self._secrets = secrets
         self._telegram = telegram
+        self._launcher = launcher
 
     async def preflight(self) -> WorkerPreflight:
         identity = await self._telegram.get_identity()
@@ -109,6 +112,30 @@ class ManagerWorker:
             if "credential" in locals():
                 credential = ""
         self._state.transition(request.request_id, RequestState.TOKEN_RECEIVED)
+        if self._launcher is None:
+            return
+        try:
+            self._launcher.materialize_and_start(request)
+        except RuntimeProvisionError:
+            self._state.transition(
+                request.request_id,
+                RequestState.FAILED,
+                "runtime_materialization_failed",
+            )
+            return
+        self._state.transition(request.request_id, RequestState.INSTANCE_MATERIALIZED)
+        self._state.transition(request.request_id, RequestState.ACTIVE)
+        self._state.upsert_instance(
+            InstanceRecord(
+                slug=request.slug,
+                request_id=request.request_id,
+                username=request.username,
+                profile=request.profile,
+                owner_telegram_id=request.owner_telegram_id,
+                state=RequestState.ACTIVE,
+                health="healthy",
+            )
+        )
 
     async def _reconcile_unmatched(self, event: ManagedBotEvent) -> None:
         self._state.record_reconciliation_event(event.update_id, "managed_update_unmatched")

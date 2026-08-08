@@ -292,6 +292,12 @@ class FactoryState:
         self.initialize()
         try:
             with self._connection() as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                existing = connection.execute(
+                    "SELECT request_id FROM instances WHERE slug = ?", (instance.slug,)
+                ).fetchone()
+                if existing is not None and existing["request_id"] != str(instance.request_id):
+                    raise StateError("Instance slug belongs to another request.")
                 connection.execute(
                     """
                     INSERT INTO instances (
@@ -317,6 +323,14 @@ class FactoryState:
                 )
         except sqlite3.IntegrityError as error:
             raise StateError("Instance conflicts with existing state.") from error
+
+    def get_instance(self, slug: str) -> InstanceRecord | None:
+        self.initialize()
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT * FROM instances WHERE slug = ?", (slug,)
+            ).fetchone()
+        return None if row is None else self._instance_from_row(row)
 
     def list_instances(self) -> list[InstanceRecord]:
         self.initialize()

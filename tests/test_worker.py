@@ -13,7 +13,7 @@ from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.state import FactoryState
 from telegram_bot_factory.telegram import ManagedBotEvent, TelegramAmbiguousError
 from telegram_bot_factory.worker import ManagerWorker
-from tests.fakes import FakeTelegramGateway
+from tests.fakes import FakeRuntimeLauncher, FakeTelegramGateway
 
 
 def make_worker(
@@ -104,3 +104,22 @@ async def test_notification_uses_managed_bot_link(tmp_path: Path) -> None:
     assert url.startswith("https://t.me/newbot/factory_manager_bot/owner_echo_bot?")
     assert telegram.notifications == [(42, url)]
     assert "123456789" not in url
+
+
+@pytest.mark.asyncio
+async def test_runtime_activation_creates_inventory_record(tmp_path: Path) -> None:
+    paths = FactoryPaths.under(tmp_path)
+    state = FactoryState(paths.database_path)
+    secrets = LocalFileSecretStore(paths)
+    telegram = FakeTelegramGateway()
+    launcher = FakeRuntimeLauncher()
+    worker = ManagerWorker(state, secrets, telegram, launcher)
+    request = make_request()
+    state.create_request(request)
+    telegram.events = [ManagedBotEvent(10, 42, 900, "owner_echo_bot")]
+
+    await worker.poll_once(poll_timeout_seconds=0)
+
+    assert state.get_request(request.request_id).state is RequestState.ACTIVE  # type: ignore[union-attr]
+    assert state.get_instance("owner_echo").health == "healthy"  # type: ignore[union-attr]
+    assert launcher.requests == [request]
