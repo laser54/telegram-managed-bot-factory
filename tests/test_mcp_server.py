@@ -25,7 +25,6 @@ CREATE_ARGUMENTS = {
     "username": "owner_echo_bot",
     "slug": "owner_echo",
     "profile_config": {"kind": "owner_echo"},
-    "owner_telegram_id": 42,
 }
 
 
@@ -47,6 +46,7 @@ async def test_tool_catalog_is_deterministic_in_both_protocol_eras(
             assert '"credential"' not in schema_text
             assert '"manager_token"' not in schema_text
             assert '"child_token"' not in schema_text
+            assert '"owner_telegram_id"' not in schema_text
 
 
 @pytest.mark.asyncio

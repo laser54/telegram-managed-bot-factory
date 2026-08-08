@@ -88,7 +88,6 @@ def create_mcp_server(
         username: BotUsername,
         slug: Slug,
         profile_config: ProfileConfig,
-        owner_telegram_id: int,
         purpose: str | None = None,
         notify_owner: bool = True,
         ctx: Context[None, Any] | None = None,
@@ -123,12 +122,11 @@ def create_mcp_server(
             ):
                 raise FactoryServiceError("Telegram confirmation acknowledgement is required.")
             service.consume_mrtr_round(ctx.request_state)
-        return service.create_request(
+        return service.create_request_for_configured_owner(
             display_name,
             username,
             slug,
             profile_config,
-            owner_telegram_id,
             purpose,
             notify_owner,
         )

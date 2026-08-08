@@ -140,6 +140,27 @@ class FactoryService:
             raise FactoryServiceError("Requested username or slug already exists.") from error
         return self._request_result(request)
 
+    def create_request_for_configured_owner(
+        self,
+        display_name: DisplayName,
+        username: BotUsername,
+        slug: Slug,
+        profile_config: ProfileConfig,
+        purpose: str | None = None,
+        notify_owner: bool = True,
+    ) -> RequestResult:
+        if len(self._config.owner_allowlist) != 1:
+            raise FactoryServiceError("Factory requires one locally enrolled owner.")
+        return self.create_request(
+            display_name,
+            username,
+            slug,
+            profile_config,
+            self._config.owner_allowlist[0],
+            purpose,
+            notify_owner,
+        )
+
     def issue_mrtr_round(self) -> str:
         return self._state.issue_mrtr_round()
 
