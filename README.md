@@ -85,7 +85,7 @@ The project will use the applicable modern MCP capabilities—not merely mention
 - explicit request handles instead of protocol session state;
 - strict JSON Schema 2020-12 inputs and structured outputs;
 - `server/discover` and modern Streamable HTTP test coverage;
-- official Tasks extension for capable clients, with a portable `request_id` fallback;
+- durable `request_id` status across clients; the experimental Tasks extension is not advertised until stable Python and host support exist;
 - MRTR (`input_required`) as an optional UX prompt for Telegram confirmation;
 - OpenTelemetry trace propagation with redaction.
 
@@ -130,4 +130,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 - [Telegram Managed Bots](https://core.telegram.org/bots/features#managed-bots)
 - [Telegram Bot API](https://core.telegram.org/bots/api)
 - [MCP specification 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)
-- [MCP Tasks extension](https://modelcontextprotocol.io/seps/2663-tasks-extension)
+- [Experimental MCP Tasks extension](https://github.com/modelcontextprotocol/ext-tasks)

@@ -25,7 +25,7 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 - [ ] Tool input/output uses strict Pydantic/JSON Schema 2020-12 models and returns structured safe status.
 - [ ] Creation returns durable explicit `request_id`; `factory_get_request` works after an MCP client/process restart.
 - [ ] Modern test client verifies `server/discover`, stateless Streamable HTTP, header validation, deterministic catalog, private cache hints, and trace redaction.
-- [ ] Modern test client verifies Tasks extension create/get/update/cancel authorization.
+- [ ] Modern test client verifies the server does not advertise the currently experimental Tasks extension; durable `request_id` authorization remains correct.
 - [ ] Modern test client verifies MRTR happy path plus expiry, principal mismatch, tamper, and replay rejection.
 - [ ] Current Hermes compatibility is demonstrated by `hermes mcp test bot-factory` and one safe `factory_preflight` call; unsupported modern features degrade gracefully.
 

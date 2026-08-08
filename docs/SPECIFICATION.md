@@ -404,10 +404,10 @@ active → stopped → retired
 
 Проект обязан использовать применимые возможности MCP `2026-07-28`, но без фальшивого заявления, что каждый host уже умеет их. На 2026-08-08 локальный Hermes 0.18.0 содержит Python `mcp` 1.26.0; поэтому v0.1 обязан иметь legacy stdio fallback, а modern capabilities включаются только после capability negotiation и отдельной реальной проверки.
 
-**Обязательная modern baseline:** официальный Python MCP SDK v2+ в package, dual-era transport tests, explicit request/task handles вместо session state, `server/discover`, strict JSON Schema 2020-12, structured output, Streamable HTTP modern-mode test, MRTR test, Tasks extension test, redacted OpenTelemetry trace propagation. Внешний продукт не считается готовым, если эти вещи только упомянуты в README и не выполнены проверяемо в tests/demo.
+**Обязательная modern baseline:** официальный Python MCP SDK v2+ в package, dual-era transport tests, explicit request handles вместо session state, `server/discover`, strict JSON Schema 2020-12, structured output, Streamable HTTP modern-mode test, MRTR test и redacted OpenTelemetry trace propagation. Внешний продукт не считается готовым, если эти вещи только упомянуты в README и не выполнены проверяемо в tests/demo.
 
 - `factory_create_request` **сразу** возвращает явно передаваемый `request_id`; вся кросс-вызовная state живёт в durable Factory store, а не в MCP session. Это соответствует stateless core 2026-07-28 и остаётся корректным при restart/reconciliation.
-- `factory_get_request(request_id)` — обязательный portable fallback. Когда клиент реально объявляет `io.modelcontextprotocol/tasks`, создание дополнительно возвращает standard task handle, а worker обновляет его через `tasks/get`/`tasks/update`; при текущем Hermes работает та же state machine через `request_id`.
+- `factory_get_request(request_id)` — обязательный portable contract во всех eras. `io.modelcontextprotocol/tasks` на дату реализации остаётся experimental reference extension без стабильной реализации в официальном Python SDK 2.0, поэтому v0.1 его не рекламирует и не имитирует. Поддержка возможна отдельным совместимым релизом только после реальной negotiation и integration tests.
 - Human approval остаётся в Telegram. MRTR (`input_required`) реализуется и тестируется modern client-ом как дополнительная UX-подсказка «подтвердите в Telegram», никогда не как замена Telegram confirmation; `requestState` AEAD/HMAC-protected, short-lived, bound to owner и single-use server-side.
 - Все tools получают строгие JSON Schema 2020-12 input/output contracts и structured status (`request_id`, `state`, `next_action`, `retry_after_ms`), с `oneOf` для profile-specific args. External `$ref` запрещены; schemas bounded по depth/size.
 - Remote Streamable HTTP modern-mode поддерживает `server/discover`, stateless requests, `Mcp-Method`/`Mcp-Name` header validation, deterministic tool order, private cache hints и OpenTelemetry trace context. Token, username, owner ID и raw error body не попадают в traces.
@@ -487,7 +487,7 @@ active → stopped → retired
 - child sees only own token env;
 - tool schemas, authorization и default tool allowlist;
 - `quick_faq`, `lead_inbox`, `link_inbox`: deterministic startup, access control, data minimization, per-instance isolation и safe `/health`;
-- modern MCP: dual-era negotiation, `server/discover`, stateless explicit handle, schema composition, MRTR expiry/tamper/replay rejection, Tasks state/authorization/cancel и trace redaction.
+- modern MCP: dual-era negotiation, `server/discover`, stateless explicit handle, schema composition, MRTR expiry/tamper/replay rejection, отсутствие ложной Tasks capability и trace redaction.
 
 ### Integration test с fake Telegram API
 

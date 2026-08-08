@@ -10,7 +10,7 @@
 | Persistent worker separate from MCP | MCP/Hermes may be transient; Telegram confirmation updates and child lifecycle are durable work. |
 | Child token acquired only by worker after Telegram confirmation | Keeps secrets out of LLM/MCP context and removes manual copy-paste. |
 | Local stdio first | Best secret boundary and simplest Hermes integration. Remote HTTP is a tested capability, not the first deployment requirement. |
-| Modern MCP with compatibility fallback | Use 2026-07-28 design/features where applicable; retain `request_id` status flow for hosts that cannot negotiate Tasks/MRTR. |
+| Modern MCP with compatibility fallback | Use stable 2026-07-28 core features where applicable and retain the durable `request_id` status flow across all hosts. Do not advertise the experimental Tasks extension until an official Python implementation and host support are proven. |
 | No general AI child profile in v0.1 | Model secrets, costs, tools, and content policy need a separate security design. |
 | MIT planned | Maximizes public reuse; validate final licensing and dependency compatibility before release. |
 
@@ -24,6 +24,7 @@
 | Current Hermes can use latest MCP features | actual negotiated/client integration tests | unverified; the local Hermes 0.18.0 environment currently has legacy `mcp 1.26.0` |
 | `hermes mcp test bot-factory` syntax/behavior meets intended flow | real CLI run after server exists | unverified |
 | Official MCP Registry schema/version at release time | validate current schema before submission | unverified |
+| `io.modelcontextprotocol/tasks` is suitable for v0.1 | stable extension plus official Python SDK and host integration | deferred: the reference extension is experimental and MCP Python SDK 2.0 does not ship its handlers |
 
 The live spike also confirmed that the manager must remain separate from the
 Hermes gateway identity: the test used an exclusive disposable manager and did
