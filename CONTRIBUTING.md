@@ -1,6 +1,6 @@
 # Contributing
 
-This project is in a private design-and-spike phase. Read [docs/START_HERE.md](docs/START_HERE.md) before editing code or expanding scope.
+This project is preparing the v0.1.0 public release. Read [docs/START_HERE.md](docs/START_HERE.md) before editing code or expanding scope.
 
 ## Development rules
 
@@ -13,7 +13,7 @@ This project is in a private design-and-spike phase. Read [docs/START_HERE.md](d
 
 ## Pull request readiness
 
-Before requesting review, run the quality commands defined once `pyproject.toml` exists, provide relevant test output, and state whether a change touches security boundaries, external Telegram effects, or package/public documentation.
+Before requesting review, run `uv run ruff check .`, `uv run mypy src`, and `uv run pytest -q`; provide relevant output and state whether a change touches security boundaries, external Telegram effects, or package/public documentation.
 
 ## Scope discipline
 

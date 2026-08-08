@@ -367,7 +367,7 @@ active → stopped → retired
 
 ### `factory_preflight` — read-only
 
-Возвращает manager username/ID, `can_manage_bots`, worker health, readiness SecretStore и счётчики pending/active/reconciliation. Не раскрывает tokens, paths или raw config.
+Возвращает manager username, `can_manage_bots`, worker health, readiness SecretStore и счётчики pending/active/reconciliation. Не раскрывает owner ID, tokens, paths или raw config.
 
 ### `factory_create_request`
 
@@ -375,10 +375,11 @@ active → stopped → retired
 
 - `display_name` — 1–64 characters;
 - `username` — 5–32 characters, заканчивается на `bot`;
-- `profile` — MVP `owner_echo`;
-- `owner_telegram_id` — только allowlist;
+- `profile_config` — строгий discriminated union встроенных profiles;
 - optional non-secret `purpose`;
 - `notify_owner` — optional, default `true`.
+
+Owner определяется только из локального enrollment config и не пересекает MCP boundary.
 
 Действие:
 
@@ -394,7 +395,7 @@ active → stopped → retired
 
 ### `factory_list_instances` — read-only
 
-Показывает non-secret inventory: slug, username, profile, creator, lifecycle, health, last verified update. Не показывает token или secret path.
+Показывает non-secret inventory: slug, username, profile, lifecycle, health, last verified update. Не показывает owner, token или secret path.
 
 ### `factory_start_instance` и `factory_stop_instance`
 
@@ -408,7 +409,7 @@ active → stopped → retired
 
 - `factory_create_request` **сразу** возвращает явно передаваемый `request_id`; вся кросс-вызовная state живёт в durable Factory store, а не в MCP session. Это соответствует stateless core 2026-07-28 и остаётся корректным при restart/reconciliation.
 - `factory_get_request(request_id)` — обязательный portable contract во всех eras. `io.modelcontextprotocol/tasks` на дату реализации остаётся experimental reference extension без стабильной реализации в официальном Python SDK 2.0, поэтому v0.1 его не рекламирует и не имитирует. Поддержка возможна отдельным совместимым релизом только после реальной negotiation и integration tests.
-- Human approval остаётся в Telegram. MRTR (`input_required`) реализуется и тестируется modern client-ом как дополнительная UX-подсказка «подтвердите в Telegram», никогда не как замена Telegram confirmation; `requestState` AEAD/HMAC-protected, short-lived, bound to owner и single-use server-side.
+- Human approval остаётся в Telegram. MRTR (`input_required`) реализуется и тестируется modern client-ом как дополнительная UX-подсказка «подтвердите в Telegram», никогда не как замена Telegram confirmation; `requestState` AEAD-protected, short-lived, bound to request/audience and authenticated principal when present, and single-use server-side.
 - Все tools получают строгие JSON Schema 2020-12 input/output contracts и structured status (`request_id`, `state`, `next_action`, `retry_after_ms`), с `oneOf` для profile-specific args. External `$ref` запрещены; schemas bounded по depth/size.
 - Remote Streamable HTTP modern-mode поддерживает `server/discover`, stateless requests, `Mcp-Method`/`Mcp-Name` header validation, deterministic tool order, private cache hints и OpenTelemetry trace context. Token, username, owner ID и raw error body не попадают в traces.
 - `subscriptions/listen` и MCP Apps реализуются как optional capability demo только после проверки host support. Apps дают operator status card/profile picker в clients с sandboxed UI; Telegram/Hermes text flow всегда имеет полноценный text fallback.

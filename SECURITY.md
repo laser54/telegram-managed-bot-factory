@@ -1,26 +1,30 @@
 # Security policy
 
+## Supported versions
+
+| Version | Supported |
+|---|---|
+| 0.1.x | Yes, after public release |
+| Unreleased development snapshots | Best effort only |
+
 ## Reporting a vulnerability
 
-Until a public security contact is published, do **not** open a public issue containing a token, Telegram update payload, secret-store path, personal data, or exploit details. Contact the repository owner privately through GitHub.
+Use GitHub private vulnerability reporting from the repository Security tab when available. Otherwise contact the repository owner privately through GitHub. Do not open a public issue containing a credential, raw Telegram update, personal data, local path, trace, or exploit detail.
 
-## Scope priorities
+If a credential may have been exposed, revoke or rotate it in Telegram before further debugging. Do not send the value to the maintainer as proof.
 
-Treat these as security-sensitive:
+## Security-sensitive scope
 
 - manager and child Telegram credentials;
-- managed-bot update/token retrieval logic;
-- secret-store and filesystem isolation;
-- owner authorization;
-- duplicate/replay/reconciliation behavior;
-- MCP/MRTR request-state integrity;
-- profile data handling, especially lead capture.
+- managed-bot update matching and token retrieval;
+- filesystem permissions, symlink/traversal defense, and subprocess isolation;
+- owner authorization and profile data handling;
+- duplicate, replay, reconciliation, and MRTR request-state behavior;
+- MCP result, error, log, and trace redaction.
 
-## Safe disclosure rules for contributors
+## Disclosure rules
 
-- Never commit or paste real secrets, raw Bot API updates, private hostnames/paths, IDs, traces, or screenshots containing them.
-- Use disposable test bots and redacted fixtures.
-- Report suspected exposure immediately; revoke/rotate the exposed credential before further debugging.
-- Do not add a fallback token or sample production credential for convenience.
-
-A formal supported-version policy and security contact will be added before the first public release.
+- Reproduce with disposable bots and synthetic runtime-generated sentinels.
+- Share only the minimum redacted evidence required to locate the issue.
+- Never add a fallback credential, production payload, or private infrastructure reference to a fixture.
+- Maintainers will acknowledge a complete private report as soon as practical and coordinate remediation and disclosure based on impact.

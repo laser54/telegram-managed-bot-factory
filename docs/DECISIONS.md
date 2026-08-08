@@ -21,9 +21,9 @@
 | Managed-bot manager setup works for a user-owned bot | live `getMe.can_manage_bots` | verified 2026-08-08; see `docs/evidence/TELEGRAM_SPIKE_2026-08-08.md` |
 | Deep-link, update, and token retrieval match design | redacted disposable E2E | verified 2026-08-08; update fields were `bot` and `user` |
 | A managed child can become a manager itself | live disposable experiment | partially explored: false by default; enabling it later remains unverified and is not needed for the safe baseline |
-| Current Hermes can use latest MCP features | actual negotiated/client integration tests | unverified; the local Hermes 0.18.0 environment currently has legacy `mcp 1.26.0` |
-| `hermes mcp test bot-factory` syntax/behavior meets intended flow | real CLI run after server exists | unverified |
-| Official MCP Registry schema/version at release time | validate current schema before submission | unverified |
+| Current Hermes can use latest MCP features | actual negotiated/client integration tests | legacy stdio verified with Hermes 0.18.0; modern extensions remain intentionally unclaimed |
+| `hermes mcp test bot-factory` syntax/behavior meets intended flow | real CLI run after server exists | verified 2026-08-08; exactly six tools discovered |
+| Official MCP Registry schema/version at release time | validate current schema before submission | `server.json` validated with publisher 1.7.9 and schema 2025-12-11; publish remains gated on PyPI |
 | `io.modelcontextprotocol/tasks` is suitable for v0.1 | stable extension plus official Python SDK and host integration | deferred: the reference extension is experimental and MCP Python SDK 2.0 does not ship its handlers |
 
 The live spike also confirmed that the manager must remain separate from the
