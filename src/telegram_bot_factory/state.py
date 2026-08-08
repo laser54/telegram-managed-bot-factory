@@ -94,6 +94,11 @@ class FactoryState:
                     request_id TEXT NOT NULL REFERENCES requests(request_id),
                     processed_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS reconciliation_events (
+                    update_id INTEGER PRIMARY KEY,
+                    safe_reason TEXT NOT NULL,
+                    occurred_at TEXT NOT NULL
+                );
                 CREATE TABLE IF NOT EXISTS instances (
                     slug TEXT PRIMARY KEY,
                     request_id TEXT NOT NULL UNIQUE REFERENCES requests(request_id),
@@ -156,6 +161,29 @@ class FactoryState:
         query += " ORDER BY created_at, request_id"
         with self._connection() as connection:
             rows = connection.execute(query, parameters).fetchall()
+        return [self._request_from_row(row) for row in rows]
+
+    def find_pending(self, username: str, owner_telegram_id: int) -> FactoryRequest | None:
+        self.initialize()
+        with self._connection() as connection:
+            row = connection.execute(
+                """SELECT * FROM requests
+                WHERE lower(username) = lower(?)
+                  AND owner_telegram_id = ?
+                  AND state = ?""",
+                (username, owner_telegram_id, RequestState.PENDING_CONFIRMATION.value),
+            ).fetchone()
+        return None if row is None else self._request_from_row(row)
+
+    def pending_for_owner(self, owner_telegram_id: int) -> list[FactoryRequest]:
+        self.initialize()
+        with self._connection() as connection:
+            rows = connection.execute(
+                """SELECT * FROM requests
+                WHERE owner_telegram_id = ? AND state = ?
+                ORDER BY created_at, request_id""",
+                (owner_telegram_id, RequestState.PENDING_CONFIRMATION.value),
+            ).fetchall()
         return [self._request_from_row(row) for row in rows]
 
     def transition(
@@ -236,6 +264,29 @@ class FactoryState:
                 (str(value),),
             )
         return value
+
+    def record_reconciliation_event(self, update_id: int, safe_reason: str) -> bool:
+        if update_id < 0 or not safe_reason or len(safe_reason) > 100:
+            raise StateError("Reconciliation event is invalid.")
+        self.initialize()
+        try:
+            with self._connection() as connection:
+                connection.execute(
+                    """INSERT INTO reconciliation_events
+                    (update_id, safe_reason, occurred_at) VALUES (?, ?, ?)""",
+                    (update_id, safe_reason, datetime.now(UTC).isoformat()),
+                )
+        except sqlite3.IntegrityError:
+            return False
+        return True
+
+    def reconciliation_event_count(self) -> int:
+        self.initialize()
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT count(*) AS total FROM reconciliation_events"
+            ).fetchone()
+        return 0 if row is None else int(row["total"])
 
     def upsert_instance(self, instance: InstanceRecord) -> None:
         self.initialize()
