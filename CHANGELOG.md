@@ -4,6 +4,17 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Changed
+
+- Prepared package version `0.1.1` without altering immutable PyPI `0.1.0` metadata.
+- Reworked the project landing page around installation, supported use cases, boundaries, and evidence.
+- Registered Hermes MCP directly through supported CLI arguments without synthetic stdin confirmation.
+
+### Fixed
+
+- Persist child Telegram update acknowledgements and offsets across restarts.
+- Quarantine crash-ambiguous child effects instead of silently duplicating lead notifications, exports, or purge confirmations.
+
 ## [0.1.0] - 2026-08-09
 
 ### Added

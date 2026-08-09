@@ -48,4 +48,4 @@ jobs:
       - run: uv run python scripts/scan_release.py dist
       - run: uv venv --python 3.12 .clean-install
       - run: uv pip install --python .clean-install/bin/python dist/*.whl
-      - run: .clean-install/bin/python -c "import telegram_bot_factory; assert telegram_bot_factory.__version__ == '0.1.0'"
+      - run: .clean-install/bin/python -c "import telegram_bot_factory; assert telegram_bot_factory.__version__ == '0.1.1'"

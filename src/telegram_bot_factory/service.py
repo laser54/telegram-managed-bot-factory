@@ -60,7 +60,9 @@ class InstanceSummary(StrictModel):
     username: BotUsername
     profile: ProfileName
     lifecycle: RequestState
-    health: Literal["unknown", "healthy", "stopped", "failed"]
+    health: Literal[
+        "unknown", "healthy", "stopped", "failed", "reconciliation_required"
+    ]
     last_verified_at: datetime
 
 

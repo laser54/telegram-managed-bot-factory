@@ -4,7 +4,11 @@ from pathlib import Path
 import pytest
 
 from telegram_bot_factory.config import FactoryConfig
-from telegram_bot_factory.models import OwnerEchoConfig, RequestState
+from telegram_bot_factory.models import (
+    InstanceRecord,
+    OwnerEchoConfig,
+    RequestState,
+)
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.service import FactoryService, FactoryServiceError
@@ -62,3 +66,55 @@ def test_preflight_never_contains_owner_or_credential(tmp_path: Path) -> None:
     assert "TEST_SENTINEL" not in result
     assert "42" not in result
     assert "manager_user_id" not in result
+
+
+def test_control_plane_surfaces_child_reconciliation_after_restart(tmp_path: Path) -> None:
+    service = ready_service(tmp_path)
+    created = service.create_request(
+        "Owner Echo", "owner_echo_bot", "owner_echo", OwnerEchoConfig(), 42
+    )
+    state = service._state
+    for target in (
+        RequestState.MANAGED_UPDATE_RECEIVED,
+        RequestState.TOKEN_RECEIVED,
+        RequestState.INSTANCE_MATERIALIZED,
+        RequestState.ACTIVE,
+    ):
+        state.transition(created.request_id, target)
+    request = state.get_request(created.request_id)
+    assert request is not None
+    state.upsert_instance(
+        InstanceRecord(
+            slug=request.slug,
+            request_id=request.request_id,
+            username=request.username,
+            profile=request.profile,
+            owner_telegram_id=request.owner_telegram_id,
+            state=RequestState.RECONCILIATION_REQUIRED,
+            health="reconciliation_required",
+        )
+    )
+    state.transition(
+        created.request_id,
+        RequestState.RECONCILIATION_REQUIRED,
+        "child_effect_ambiguous",
+    )
+
+    paths = FactoryPaths.under(tmp_path)
+    restarted = FactoryService(
+        FactoryState(paths.database_path),
+        LocalFileSecretStore(paths),
+        FactoryConfig(
+            manager_username="factory_manager_bot",
+            manager_user_id=100,
+            can_manage_bots=True,
+            owner_allowlist=[42],
+        ),
+    )
+    fetched = restarted.get_request(created.request_id)
+    listed = restarted.list_instances().instances
+
+    assert fetched.state is RequestState.RECONCILIATION_REQUIRED
+    assert fetched.next_action == "reconcile"
+    assert listed[0].lifecycle is RequestState.RECONCILIATION_REQUIRED
+    assert listed[0].health == "reconciliation_required"

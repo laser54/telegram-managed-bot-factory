@@ -7,7 +7,7 @@ import asyncio
 import json
 import os
 import signal
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from pathlib import Path
 
 from aiogram import Bot
@@ -63,12 +63,16 @@ async def run_child(token_fd: int, manifest_path: Path, runtime_dir: Path) -> No
     bot = Bot(token=credential)
     credential = ""
     profile = build_profile(manifest, runtime_dir)
-    offset = 0
+    store = ProfileStore(runtime_dir)
+    offset = store.update_offset()
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for signum in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(signum, stop.set)
-    write_health(runtime_dir, "healthy")
+    write_health(
+        runtime_dir,
+        "reconciliation_required" if store.reconciliation_required() else "healthy",
+    )
     try:
         while not stop.is_set():
             try:
@@ -84,18 +88,49 @@ async def run_child(token_fd: int, manifest_path: Path, runtime_dir: Path) -> No
                 offset = max(offset, update.update_id + 1)
                 message = update.message
                 if message is None or message.from_user is None or message.text is None:
+                    store.advance_update_offset(update.update_id + 1)
                     continue
-                replies = profile.handle(message.from_user.id, message.text)
-                for reply in replies:
-                    target = (
-                        message.chat.id
-                        if reply.target == "sender"
-                        else manifest.owner_telegram_id
-                    )
-                    await bot.send_message(target, reply.text)
+                disposition = await process_update(
+                    store=store,
+                    profile=profile,
+                    update_id=update.update_id,
+                    sender_telegram_id=message.from_user.id,
+                    sender_chat_id=message.chat.id,
+                    owner_telegram_id=manifest.owner_telegram_id,
+                    text=message.text,
+                    send_message=bot.send_message,
+                )
+                store.advance_update_offset(update.update_id + 1)
+                if disposition == "quarantine":
+                    write_health(runtime_dir, "reconciliation_required")
     finally:
-        write_health(runtime_dir, "stopped")
+        write_health(
+            runtime_dir,
+            "reconciliation_required" if store.reconciliation_required() else "stopped",
+        )
         await bot.session.close()
+
+
+async def process_update(
+    *,
+    store: ProfileStore,
+    profile: ChildProfile,
+    update_id: int,
+    sender_telegram_id: int,
+    sender_chat_id: int,
+    owner_telegram_id: int,
+    text: str,
+    send_message: Callable[[int, str], Awaitable[object]],
+) -> str:
+    disposition = store.begin_update(update_id)
+    if disposition != "process":
+        return disposition
+    replies = profile.handle(sender_telegram_id, text)
+    for reply in replies:
+        target = sender_chat_id if reply.target == "sender" else owner_telegram_id
+        await send_message(target, reply.text)
+    store.complete_update(update_id)
+    return "complete"
 
 
 def build_profile(manifest: object, runtime_dir: Path) -> ChildProfile:

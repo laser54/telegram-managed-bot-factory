@@ -2,6 +2,9 @@
 
 ## Current state — v0.1.0 released
 
+Unreleased `0.1.1` is being prepared in the repository. It does not modify the
+already-published, immutable PyPI `0.1.0` metadata.
+
 - The Telegram Managed Bots live spike passed on 2026-08-08 with redacted evidence.
 - Typed package, SQLite state machine, local secret store, persistent worker, isolated runtime, four built-in profiles, six-tool MCP server, setup, systemd unit, and Hermes installer are implemented.
 - Windows development suite: 54 passed and one OS-specific symlink test skipped.
@@ -20,7 +23,7 @@
 ## Release notes
 
 - All v0.1.0 publication gates are complete. See the [publication evidence](evidence/RELEASE_0.1.0_2026-08-09.md).
-- The immutable PyPI `0.1.0` long description was built while external gates were still pending and therefore retains release-candidate status wording. The repository documentation records the completed release; a future package version will carry the updated wording.
+- The immutable PyPI `0.1.0` long description was built while external gates were still pending and therefore retains release-candidate status wording. Repository documentation records the completed public-alpha release; unreleased `0.1.1` carries the corrected wording.
 - The Official MCP Registry is still a preview service and its listing is not a security certification.
 
 No Hermes curated-catalog listing is claimed.

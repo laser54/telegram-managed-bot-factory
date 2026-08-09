@@ -129,7 +129,9 @@ class InstanceRecord(StrictModel):
     profile: ProfileName
     owner_telegram_id: Annotated[int, Field(gt=0)]
     state: RequestState
-    health: Literal["unknown", "healthy", "stopped", "failed"] = "unknown"
+    health: Literal[
+        "unknown", "healthy", "stopped", "failed", "reconciliation_required"
+    ] = "unknown"
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 
