@@ -103,6 +103,9 @@ async def run_child(token_fd: int, manifest_path: Path, runtime_dir: Path) -> No
                 store.advance_update_offset(update.update_id + 1)
                 if disposition == "quarantine":
                     write_health(runtime_dir, "reconciliation_required")
+                    # A side effect may have happened. Stop this child rather than
+                    # processing later messages under an ambiguous lifecycle.
+                    break
     finally:
         write_health(
             runtime_dir,
