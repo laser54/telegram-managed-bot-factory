@@ -105,7 +105,7 @@ async def run_child(token_fd: int, manifest_path: Path, runtime_dir: Path) -> No
                     write_health(runtime_dir, "reconciliation_required")
                     # A side effect may have happened. Stop this child rather than
                     # processing later messages under an ambiguous lifecycle.
-                    break
+                    return
     finally:
         write_health(
             runtime_dir,
