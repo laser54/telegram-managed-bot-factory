@@ -334,6 +334,12 @@ runtime/<slug>/                   mode 0700 per child
 
 Команда `bot-factory-manager run` запускает постоянный worker.
 
+В Linux worker устанавливается как `systemd --user` service. Unit применяет
+`NoNewPrivileges`, `PrivateTmp`, `ProtectSystem=strict`, `ProtectHome=read-only`
+и явный allowlist writable XDG-каталогов. `PrivateDevices` намеренно не
+используется: в WSL2 эта директива может завершить user service до запуска с
+`218/CAPABILITIES`.
+
 Он обязан:
 
 - получить manager token только из `BOT_FACTORY_MANAGER_TOKEN_FILE` или `SecretStore`, не из CLI argument;
