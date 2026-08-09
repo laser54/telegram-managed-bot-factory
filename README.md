@@ -45,6 +45,9 @@ The installer:
 5. installs a hardened `bot-factory-manager.service` user unit;
 6. registers `bot-factory-mcp` with Hermes and verifies all six tools.
 
+The installer fails closed unless Hermes explicitly reports all six tools; it
+does not trust the Hermes process exit code by itself.
+
 Do not paste the token into Hermes, this README, a command argument, an environment variable, or a YAML file.
 Re-running installation verifies a complete existing enrollment from the local
 secret store and does not ask for the manager token again.

@@ -41,6 +41,7 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 ## E. Operator experience
 
 - [ ] `bot-factory install-hermes` completes user-level installation without editing Hermes YAML in the happy path.
+- [x] Installer rejects a textual Hermes connection failure even when the Hermes CLI exits with status zero.
 - [ ] Setup checks manager identity, management mode, owner policy, secret store, and worker readiness before start.
 - [x] The generated hardened user unit starts under WSL2 `systemd --user` without a `218/CAPABILITIES` failure.
 - [x] A new child needs no more than one Telegram confirmation action from the owner.
