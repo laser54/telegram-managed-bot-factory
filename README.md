@@ -48,6 +48,9 @@ The installer:
 The installer fails closed unless Hermes explicitly reports all six tools; it
 does not trust the Hermes process exit code by itself.
 
+Installation creates no child bots. A test or useful child is created only
+after a separate explicit Factory request and the normal Telegram confirmation.
+
 Do not paste the token into Hermes, this README, a command argument, an environment variable, or a YAML file.
 Re-running installation verifies a complete existing enrollment from the local
 secret store and does not ask for the manager token again.
@@ -98,7 +101,7 @@ Modern clients negotiate `server/discover`, stateless Streamable HTTP, strict sc
 - A child receives only its credential through an inherited anonymous file descriptor, never CLI arguments or environment variables.
 - Duplicate updates are no-ops. Mismatched, late, or ambiguous external results enter `reconciliation_required` and are not blindly retried.
 
-See [specification](docs/SPECIFICATION.md), [architecture](docs/ARCHITECTURE.md), [acceptance criteria](docs/ACCEPTANCE.md), and [redacted live evidence](docs/evidence/TELEGRAM_SPIKE_2026-08-08.md).
+See [specification](docs/SPECIFICATION.md), [architecture](docs/ARCHITECTURE.md), [acceptance criteria](docs/ACCEPTANCE.md), [redacted Telegram spike evidence](docs/evidence/TELEGRAM_SPIKE_2026-08-08.md), and [redacted TestPyPI live E2E evidence](docs/evidence/TESTPYPI_LIVE_E2E_2026-08-09.md).
 
 ## Troubleshooting
 
@@ -115,6 +118,11 @@ On WSL2, confirm that PID 1 is `systemd` before rerunning setup:
 ps -p 1 -o comm=
 systemctl --user is-system-running
 ```
+
+WSL2 is a development environment: keep a WSL session or another WSL process
+running during a live bot test. Windows may stop an idle distribution, which
+also stops its `systemd --user` services. A continuously running Linux host is
+the supported production target.
 
 Do not paste journal output into an issue until it has been reviewed for personal data. Factory errors are intentionally redacted.
 

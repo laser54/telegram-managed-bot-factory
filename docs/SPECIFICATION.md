@@ -142,6 +142,12 @@ uvx --from telegram-managed-bot-factory bot-factory install-hermes
 6. Проверяет `getMe`/`can_manage_bots`, owner allowlist и запускает manager worker only after explicit local confirmation.
 7. Выполняет `hermes mcp test bot-factory` and returns a human-readable success/failure result without tokens.
 
+Установка и setup создают **ноль child bots**. Test/demo child не создаётся
+автоматически и не является скрытым health-check. Для него пользователь должен
+отдельно инициировать `factory_create_request`, после чего применяется обычное
+обязательное Telegram confirmation. Installer лишь сообщает эту возможность и
+не задаёт consent-вопрос, способный случайно породить внешний side effect.
+
 Exit status Hermes недостаточен для этого шага: Hermes 0.18 может вернуть zero
 после textual connection failure. Installer считает регистрацию успешной только
 после явного результата `Tools discovered: 6`; raw CLI output не становится

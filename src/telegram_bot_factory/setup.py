@@ -116,6 +116,10 @@ async def run_setup(paths: FactoryPaths | None = None) -> None:
         "Factory setup verified. The manager credential remains stored locally "
         "with owner-only access."
     )
+    print(
+        "No child bots were created. Create a test or useful child only through "
+        "an explicit Factory request and Telegram confirmation."
+    )
 
 
 def setup_main(paths: FactoryPaths | None = None) -> None:

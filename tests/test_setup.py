@@ -7,6 +7,7 @@ import telegram_bot_factory.setup as factory_setup
 from telegram_bot_factory.config import read_factory_config
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
+from telegram_bot_factory.state import FactoryState
 from tests.sentinels import token_shaped_sentinel
 
 SENTINEL = token_shaped_sentinel("TEST_SENTINEL_MANAGER")
@@ -47,7 +48,9 @@ class FakeSetupBot:
 
 @pytest.mark.asyncio
 async def test_setup_accepts_manager_credential_only_through_hidden_prompt(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     paths = FactoryPaths.under(tmp_path)
     monkeypatch.setattr(factory_setup.getpass, "getpass", lambda _prompt: SENTINEL)
@@ -62,6 +65,8 @@ async def test_setup_accepts_manager_credential_only_through_hidden_prompt(
     assert config.manager_username == "factory_manager_bot"
     assert LocalFileSecretStore(paths).read_manager() == SENTINEL
     assert SENTINEL.encode() not in (paths.config_dir / "config.json").read_bytes()
+    assert FactoryState(paths.database_path).list_instances() == []
+    assert "No child bots were created." in capsys.readouterr().out
 
 
 @pytest.mark.asyncio

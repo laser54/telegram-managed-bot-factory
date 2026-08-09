@@ -16,7 +16,7 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 - [x] Setup accepts manager credential only via hidden local input; no CLI `--token` argument exists.
 - [x] Re-running setup with a complete enrollment reuses `SecretStore` without another token prompt or owner poller.
 - [x] Secret directories/files have verified owner-only permissions.
-- [ ] SQLite state, manifests, logs, traces, exception rendering, test output, wheel, sdist, Git history, and CI artifacts contain no secrets.
+- [x] SQLite state, manifests, logs, traces, exception rendering, test output, wheel, sdist, Git history, and CI artifacts contain no secrets.
 - [x] Each child process receives only its own credential; manager credential is not inherited.
 - [x] Path traversal, symlink escape, duplicate slug overwrite, and arbitrary executable/profile selection are rejected.
 
@@ -40,20 +40,21 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 
 ## E. Operator experience
 
-- [ ] `bot-factory install-hermes` completes user-level installation without editing Hermes YAML in the happy path.
+- [x] `bot-factory install-hermes` completes user-level installation without editing Hermes YAML in the happy path.
 - [x] Installer rejects a textual Hermes connection failure even when the Hermes CLI exits with status zero.
-- [ ] Setup checks manager identity, management mode, owner policy, secret store, and worker readiness before start.
+- [x] Setup checks manager identity, management mode, owner policy, secret store, and worker readiness before start.
+- [x] Setup and Hermes installation create zero child bots; a test child requires a separate explicit request and Telegram confirmation.
 - [x] The generated hardened user unit starts under WSL2 `systemd --user` without a `218/CAPABILITIES` failure.
 - [x] A new child needs no more than one Telegram confirmation action from the owner.
 - [x] Statuses are human-readable and never show raw updates, stack traces, tokens, internal paths/hosts, or unnecessary IDs.
-- [ ] Main `quick_faq` demo completes in 60–90 seconds and visibly answers an FAQ question.
-- [ ] README demonstrates `lead_inbox` and `link_inbox` as two additional short value scenarios.
+- [x] Main `quick_faq` demo completes within the 60–90-second demonstration budget and visibly answers an FAQ question.
+- [x] README demonstrates `lead_inbox` and `link_inbox` as two additional short value scenarios.
 
 ## F. Release and publication
 
-- [ ] `pytest`, `ruff check .`, type check, package secret scan, and dependency/security scan are green in CI.
+- [x] `pytest`, `ruff check .`, type check, package secret scan, and dependency/security scan are green in CI.
 - [x] `python -m build` produces wheel and sdist from a clean checkout; `twine check dist/*` passes.
-- [ ] Clean virtual environment install works from TestPyPI before production PyPI.
+- [x] Clean virtual environment install works from TestPyPI before production PyPI.
 - [x] Package metadata, README rendering, LICENSE, CHANGELOG, SECURITY, CONTRIBUTING, and Code of Conduct are complete.
 - [ ] PyPI name is rechecked immediately before upload; prior 404 is not treated as reservation.
 - [x] GitHub Actions uses PyPI Trusted Publishing OIDC with a protected environment, not a long-lived API token.

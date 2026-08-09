@@ -14,6 +14,7 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - Six-tool Hermes MCP control plane with modern `2026-07-28` and legacy stdio compatibility.
 - Sealed single-use MRTR confirmation state and modern stateless HTTP validation.
 - Hidden local setup, owner enrollment, hardened `systemd --user` worker, and Hermes registration.
+- Side-effect-free installation that creates no child bots until a separate explicit Factory request and Telegram confirmation.
 - Linux/Python 3.11–3.14 acceptance suite, release artifact scans, OIDC Trusted Publishing workflows, provenance attestations, and Registry metadata.
 
 ### Security
