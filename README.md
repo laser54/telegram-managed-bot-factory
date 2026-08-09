@@ -9,8 +9,8 @@ into isolated, useful child bots. Ask Hermes for a supported bot, confirm that
 specific creation in Telegram, and the persistent Factory worker retrieves and
 contains the child credential without exposing it to the model or MCP.
 
-Public alpha `0.1.0` is on [PyPI](https://pypi.org/project/telegram-managed-bot-factory/0.1.0/).
-Repository work is preparing unreleased `0.1.1`; PyPI release metadata is immutable.
+Public alpha `0.1.2` is published on [PyPI](https://pypi.org/project/telegram-managed-bot-factory/0.1.2/).
+Each PyPI version is immutable; install the current release below.
 
 ## Install
 
@@ -18,7 +18,7 @@ Requires Linux with `systemd --user`, Python 3.11–3.14, [uv](https://docs.astr
 Hermes 0.18, and a separate Telegram bot with Bot Management Mode enabled.
 
 ```bash
-uvx --from telegram-managed-bot-factory==0.1.0 bot-factory install-hermes
+uvx --from telegram-managed-bot-factory==0.1.2 bot-factory install-hermes
 ```
 
 The local installer securely prompts once for the manager credential, enrolls
