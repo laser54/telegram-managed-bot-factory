@@ -144,6 +144,12 @@ uvx --from telegram-managed-bot-factory bot-factory install-hermes
 
 One-line install не означает zero-consent: после него пользователь всё равно самостоятельно включает Bot Management Mode в BotFather и один раз скрыто вводит manager token. Это единственные неизбежные security actions; остальное должно быть автоматическим.
 
+Повторный запуск setup после полного enrollment не запрашивает token и не
+запускает второй owner-poller. Он читает credential только из локального
+`SecretStore`, повторно проверяет manager identity через `getMe` и сохраняет
+существующий owner allowlist. Неполная локальная конфигурация требует явной
+reconciliation и не перезаписывается автоматически.
+
 Documented fallbacks: `pipx install telegram-managed-bot-factory` and a manual `hermes mcp add` path for restricted/offline environments. Но README, PyPI description и demo ведут пользователя прежде всего через one-line happy path.
 
 ### Две части системы

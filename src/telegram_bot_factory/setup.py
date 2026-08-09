@@ -9,7 +9,11 @@ import secrets as random_secrets
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
 
-from telegram_bot_factory.config import FactoryConfig, write_factory_config
+from telegram_bot_factory.config import (
+    FactoryConfig,
+    read_factory_config,
+    write_factory_config,
+)
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.state import FactoryState
@@ -60,7 +64,19 @@ async def enroll_owner(bot: Bot, poll_timeout_seconds: int = 20) -> int:
 async def run_setup(paths: FactoryPaths | None = None) -> None:
     trusted_paths = paths or FactoryPaths.discover()
     trusted_paths.ensure_non_secret_layout()
-    credential = getpass.getpass("Manager token (hidden): ")
+    store = LocalFileSecretStore(trusted_paths)
+    config_path = trusted_paths.config_dir / "config.json"
+    has_secret = store.manager_configured()
+    has_config = config_path.is_file()
+    if has_secret != has_config:
+        raise SetupError("Existing Factory setup is incomplete and requires reconciliation.")
+    existing_config = read_factory_config(config_path) if has_config else None
+    credential = (
+        store.read_manager()
+        if has_secret
+        else getpass.getpass("Manager token (hidden): ")
+    )
+    bot: Bot | None = None
     try:
         bot = Bot(token=credential)
     except Exception as error:
@@ -74,24 +90,30 @@ async def run_setup(paths: FactoryPaths | None = None) -> None:
             raise SetupError("Manager bot must have a username.")
         if not identity.can_manage_bots:
             raise SetupError("Enable Bot Management Mode in BotFather before setup.")
-        owner_id = await enroll_owner(bot)
-        store = LocalFileSecretStore(trusted_paths)
-        store.write_manager(credential, overwrite=store.manager_configured())
-        write_factory_config(
-            trusted_paths.config_dir / "config.json",
-            FactoryConfig(
-                manager_username=identity.username,
-                manager_user_id=identity.id,
-                can_manage_bots=True,
-                owner_allowlist=[owner_id],
-            ),
-        )
+        if existing_config is None:
+            owner_id = await enroll_owner(bot)
+            store.write_manager(credential)
+            write_factory_config(
+                config_path,
+                FactoryConfig(
+                    manager_username=identity.username,
+                    manager_user_id=identity.id,
+                    can_manage_bots=True,
+                    owner_allowlist=[owner_id],
+                ),
+            )
+        elif (
+            identity.username != existing_config.manager_username
+            or identity.id != existing_config.manager_user_id
+        ):
+            raise SetupError("Stored manager identity does not match Telegram.")
         FactoryState(trusted_paths.database_path).initialize()
     finally:
         credential = ""
-        await bot.session.close()
+        if bot is not None:
+            await bot.session.close()
     print(
-        "Factory setup verified. The manager credential is stored locally "
+        "Factory setup verified. The manager credential remains stored locally "
         "with owner-only access."
     )
 

@@ -46,6 +46,8 @@ The installer:
 6. registers `bot-factory-mcp` with Hermes and verifies all six tools.
 
 Do not paste the token into Hermes, this README, a command argument, an environment variable, or a YAML file.
+Re-running installation verifies a complete existing enrollment from the local
+secret store and does not ask for the manager token again.
 
 Before PyPI publication, contributors can run the non-live suite from source:
 

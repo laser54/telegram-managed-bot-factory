@@ -9,6 +9,7 @@
 | Separate user-owned manager bot | Avoids conflating Hermes gateway updates with factory updates; makes ownership and runtime boundaries clear. |
 | Persistent worker separate from MCP | MCP/Hermes may be transient; Telegram confirmation updates and child lifecycle are durable work. |
 | WSL-compatible user-service hardening | The generated `systemd --user` unit keeps `NoNewPrivileges`, `PrivateTmp`, read-only home/system protection, and writable XDG allowlists, but omits `PrivateDevices`: that directive fails before process execution with `218/CAPABILITIES` under WSL2 user services. |
+| Setup reuses a complete local enrollment | A repeated setup verifies the stored manager against Telegram without another token prompt or owner polling. A partial local setup fails closed for reconciliation instead of guessing which identity to overwrite. |
 | Child token acquired only by worker after Telegram confirmation | Keeps secrets out of LLM/MCP context and removes manual copy-paste. |
 | Local stdio first | Best secret boundary and simplest Hermes integration. Remote HTTP is a tested capability, not the first deployment requirement. |
 | Modern MCP with compatibility fallback | Use stable 2026-07-28 core features where applicable and retain the durable `request_id` status flow across all hosts. Do not advertise the experimental Tasks extension until an official Python implementation and host support are proven. |
