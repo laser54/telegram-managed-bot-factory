@@ -48,4 +48,6 @@ jobs:
       - run: uv run python scripts/scan_release.py dist
       - run: uv venv --python 3.12 .clean-install
       - run: uv pip install --python .clean-install/bin/python dist/*.whl
-      - run: .clean-install/bin/python -c "import telegram_bot_factory; assert telegram_bot_factory.__version__ == '0.1.1'"
+      - run: |
+          EXPECTED_VERSION="$(uv run python -c 'from telegram_bot_factory import __version__; print(__version__)')"
+          .clean-install/bin/python -c "import sys, telegram_bot_factory; assert telegram_bot_factory.__version__ == sys.argv[1]" "$EXPECTED_VERSION"
