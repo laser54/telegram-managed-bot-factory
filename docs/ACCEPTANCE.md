@@ -14,6 +14,7 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 ## B. Secrets and isolation
 
 - [x] Setup accepts manager credential only via hidden local input; no CLI `--token` argument exists.
+- [x] Re-running setup with a complete enrollment reuses `SecretStore` without another token prompt or owner poller.
 - [x] Secret directories/files have verified owner-only permissions.
 - [ ] SQLite state, manifests, logs, traces, exception rendering, test output, wheel, sdist, Git history, and CI artifacts contain no secrets.
 - [x] Each child process receives only its own credential; manager credential is not inherited.
