@@ -1,6 +1,6 @@
 # Publication plan
 
-This document is a release gate, not a claim that publication has happened.
+This document records the release gates and their verified completion.
 
 ## Verified progress on 2026-08-09
 
@@ -9,8 +9,13 @@ This document is a release gate, not a claim that publication has happened.
   environment requires maintainer approval.
 - TestPyPI candidate `0.1.0rc4` passed clean installation, Hermes discovery, and
   the redacted live managed-child E2E.
-- Production PyPI, the signed `v0.1.0` tag, GitHub Release, and Official MCP
-  Registry publication remain gated.
+- Signed tag `v0.1.0`, production PyPI, the GitHub Release, and Official MCP
+  Registry publication are complete.
+- Production `uvx`, Hermes six-tool discovery, and safe Factory preflight passed.
+- The original GitHub Release job published PyPI successfully but lacked a
+  checkout before `gh release create --verify-tag`. The Release was completed
+  from the immutable workflow artifact, and the workflow regression was fixed
+  and tested in PR #13.
 
 ## Artifact sequence
 

@@ -59,4 +59,4 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 - [x] PyPI name was rechecked immediately before the release workflow; the production JSON endpoint still returned 404.
 - [x] GitHub Actions uses PyPI Trusted Publishing OIDC with a protected environment, not a long-lived API token.
 - [x] `server.json` is validated against the current Official MCP Registry schema only after real package/version values exist.
-- [ ] Public release claims are made only after public GitHub source, PyPI release, and live E2E evidence exist.
+- [x] Public release claims are made only after public GitHub source, PyPI release, Official MCP Registry publication, and live E2E evidence exist.
