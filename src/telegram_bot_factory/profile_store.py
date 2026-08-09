@@ -169,10 +169,10 @@ class ProfileStore:
         return None if row is None else str(row["status"])
 
     def reconciliation_required(self) -> bool:
+        """Return true only for a confirmed ambiguous effect, never a live reservation."""
         with self._connection() as connection:
             row = connection.execute(
-                """SELECT 1 FROM inbound_updates
-                WHERE status IN ('processing', 'quarantined') LIMIT 1"""
+                "SELECT 1 FROM inbound_updates WHERE status = 'quarantined' LIMIT 1"
             ).fetchone()
         return row is not None
 

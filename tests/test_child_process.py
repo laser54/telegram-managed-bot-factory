@@ -110,7 +110,12 @@ def test_update_offset_survives_restart_and_never_moves_backward(tmp_path: Path)
     assert ProfileStore(tmp_path).update_offset() == 12
 
 
-def test_incomplete_update_is_durable_reconciliation_on_restart(tmp_path: Path) -> None:
+def test_live_reservation_is_not_reconciled_until_restart_replay_is_confirmed(
+    tmp_path: Path,
+) -> None:
     store = ProfileStore(tmp_path)
     assert store.begin_update(12) == "process"
-    assert ProfileStore(tmp_path).reconciliation_required() is True
+    assert ProfileStore(tmp_path).reconciliation_required() is False
+    restarted = ProfileStore(tmp_path)
+    assert restarted.begin_update(12) == "quarantine"
+    assert restarted.reconciliation_required() is True

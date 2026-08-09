@@ -35,6 +35,7 @@ def test_restart_promotes_durable_child_quarantine_to_manager_state(
     )
     store = ProfileStore(paths.runtime_dir / str(request.slug))
     assert store.begin_update(99) == "process"
+    assert ProfileStore(paths.runtime_dir / str(request.slug)).begin_update(99) == "quarantine"
 
     reconcile_child_updates(FactoryState(paths.database_path), paths)
 
