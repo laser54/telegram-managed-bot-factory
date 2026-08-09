@@ -10,6 +10,7 @@
 | Persistent worker separate from MCP | MCP/Hermes may be transient; Telegram confirmation updates and child lifecycle are durable work. |
 | WSL-compatible user-service hardening | The generated `systemd --user` unit keeps `NoNewPrivileges`, `PrivateTmp`, read-only home/system protection, and writable XDG allowlists, but omits `PrivateDevices`: that directive fails before process execution with `218/CAPABILITIES` under WSL2 user services. |
 | Setup reuses a complete local enrollment | A repeated setup verifies the stored manager against Telegram without another token prompt or owner polling. A partial local setup fails closed for reconciliation instead of guessing which identity to overwrite. |
+| Installation creates no child bots | Setup and Hermes registration have no child-creation side effect. A test or useful child requires a separate explicit Factory request and the normal Telegram confirmation. |
 | Hermes installation verifies semantic CLI output | Hermes 0.18 can return exit status zero after an MCP connection failure, so the installer requires an explicit six-tool discovery result instead of trusting the process status alone. |
 | Child token acquired only by worker after Telegram confirmation | Keeps secrets out of LLM/MCP context and removes manual copy-paste. |
 | Local stdio first | Best secret boundary and simplest Hermes integration. Remote HTTP is a tested capability, not the first deployment requirement. |
