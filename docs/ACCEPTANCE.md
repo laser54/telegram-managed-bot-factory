@@ -56,7 +56,7 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 - [x] `python -m build` produces wheel and sdist from a clean checkout; `twine check dist/*` passes.
 - [x] Clean virtual environment install works from TestPyPI before production PyPI.
 - [x] Package metadata, README rendering, LICENSE, CHANGELOG, SECURITY, CONTRIBUTING, and Code of Conduct are complete.
-- [ ] PyPI name is rechecked immediately before upload; prior 404 is not treated as reservation.
+- [x] PyPI name was rechecked immediately before the release workflow; the production JSON endpoint still returned 404.
 - [x] GitHub Actions uses PyPI Trusted Publishing OIDC with a protected environment, not a long-lived API token.
 - [x] `server.json` is validated against the current Official MCP Registry schema only after real package/version values exist.
 - [ ] Public release claims are made only after public GitHub source, PyPI release, and live E2E evidence exist.
