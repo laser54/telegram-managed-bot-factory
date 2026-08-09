@@ -11,8 +11,10 @@ def test_systemd_unit_contains_hardening_and_no_credentials(tmp_path: Path) -> N
     manager = (tmp_path / "bin" / "bot-factory-manager").resolve()
     unit = render_user_unit(manager, paths)
     assert "NoNewPrivileges=true" in unit
+    assert "PrivateTmp=true" in unit
     assert "ProtectSystem=strict" in unit
     assert "ProtectHome=read-only" in unit
+    assert "PrivateDevices=" not in unit
     assert "BOT_FACTORY_MANAGER_TOKEN" not in unit
     assert "Environment=" not in unit
 

@@ -33,7 +33,6 @@ Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
 PrivateTmp=true
-PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths={writable}

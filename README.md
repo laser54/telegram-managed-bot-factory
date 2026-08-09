@@ -104,6 +104,13 @@ systemctl --user status bot-factory-manager.service
 journalctl --user -u bot-factory-manager.service --since today
 ```
 
+On WSL2, confirm that PID 1 is `systemd` before rerunning setup:
+
+```bash
+ps -p 1 -o comm=
+systemctl --user is-system-running
+```
+
 Do not paste journal output into an issue until it has been reviewed for personal data. Factory errors are intentionally redacted.
 
 If Hermes cannot connect:
