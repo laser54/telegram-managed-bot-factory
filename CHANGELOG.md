@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] - 2026-08-09
+
+### Fixed
+
+- Correct the PyPI landing-page release status and installation command to point to the published release.
+
 ## [0.1.1] - 2026-08-09
 
 ### Changed
