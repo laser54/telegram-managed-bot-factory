@@ -2,6 +2,16 @@
 
 This document is a release gate, not a claim that publication has happened.
 
+## Verified progress on 2026-08-09
+
+- The repository is public after history and artifact secret scans.
+- TestPyPI and PyPI use GitHub OIDC Trusted Publishing; the production `pypi`
+  environment requires maintainer approval.
+- TestPyPI candidate `0.1.0rc4` passed clean installation, Hermes discovery, and
+  the redacted live managed-child E2E.
+- Production PyPI, the signed `v0.1.0` tag, GitHub Release, and Official MCP
+  Registry publication remain gated.
+
 ## Artifact sequence
 
 1. Keep the repository private while validating Telegram behavior and security boundaries.
