@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "telegram-managed-bot-factory"
-version = "0.1.0"
+version = "0.1.0rc4"
 description = "A secure MCP control plane for Telegram Managed Bots"
 readme = "README.md"
 requires-python = ">=3.11"
