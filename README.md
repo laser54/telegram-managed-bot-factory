@@ -4,7 +4,7 @@
 
 <!-- mcp-name: io.github.laser54/bot-factory -->
 
-Status: v0.1.0 release candidate. The implementation and local acceptance suite are complete, but the package is not yet published to PyPI and the Registry entry is not yet live. See [project status](docs/STATUS.md).
+Status: v0.1.0 is available on [PyPI](https://pypi.org/project/telegram-managed-bot-factory/0.1.0/), published as a [GitHub Release](https://github.com/laser54/telegram-managed-bot-factory/releases/tag/v0.1.0), and listed in the [Official MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.laser54%2Fbot-factory). See [project status](docs/STATUS.md).
 
 Configure one separate manager bot once. Afterwards Hermes can request a focused child bot, you confirm its creation in Telegram, and the persistent Factory worker retrieves the child credential directly from Telegram and starts an isolated built-in profile. Child credentials never need to be copied into Hermes or a chat.
 
@@ -28,7 +28,7 @@ Windows and macOS runtime installation are not supported in v0.1.
 
 Profiles cannot supply code, executables, filesystem paths, HTML, or remote fetches.
 
-## Install after the PyPI release
+## Install
 
 Prerequisites: install [uv](https://docs.astral.sh/uv/) and Hermes, create a dedicated manager bot in BotFather, and enable Bot Management Mode for it.
 
@@ -55,7 +55,7 @@ Do not paste the token into Hermes, this README, a command argument, an environm
 Re-running installation verifies a complete existing enrollment from the local
 secret store and does not ask for the manager token again.
 
-Before PyPI publication, contributors can run the non-live suite from source:
+Contributors can run the non-live suite from source:
 
 ```bash
 uv sync --frozen --group dev
@@ -101,7 +101,7 @@ Modern clients negotiate `server/discover`, stateless Streamable HTTP, strict sc
 - A child receives only its credential through an inherited anonymous file descriptor, never CLI arguments or environment variables.
 - Duplicate updates are no-ops. Mismatched, late, or ambiguous external results enter `reconciliation_required` and are not blindly retried.
 
-See [specification](docs/SPECIFICATION.md), [architecture](docs/ARCHITECTURE.md), [acceptance criteria](docs/ACCEPTANCE.md), [redacted Telegram spike evidence](docs/evidence/TELEGRAM_SPIKE_2026-08-08.md), and [redacted TestPyPI live E2E evidence](docs/evidence/TESTPYPI_LIVE_E2E_2026-08-09.md).
+See [specification](docs/SPECIFICATION.md), [architecture](docs/ARCHITECTURE.md), [acceptance criteria](docs/ACCEPTANCE.md), [redacted Telegram spike evidence](docs/evidence/TELEGRAM_SPIKE_2026-08-08.md), [redacted TestPyPI live E2E evidence](docs/evidence/TESTPYPI_LIVE_E2E_2026-08-09.md), and the [v0.1.0 publication record](docs/evidence/RELEASE_0.1.0_2026-08-09.md).
 
 ## Troubleshooting
 

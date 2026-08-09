@@ -1,6 +1,6 @@
 # Start Here: maintainer handoff
 
-The blocking Telegram spike and implementation are complete. Preserve the proven flow and finish only the remaining external publication gates recorded in [STATUS.md](STATUS.md) and [PUBLICATION.md](PUBLICATION.md).
+The blocking Telegram spike, implementation, and v0.1.0 publication are complete. Preserve the proven flow and consult [STATUS.md](STATUS.md), [PUBLICATION.md](PUBLICATION.md), and the [release evidence](evidence/RELEASE_0.1.0_2026-08-09.md) before planning follow-up work.
 
 ## Mission
 
