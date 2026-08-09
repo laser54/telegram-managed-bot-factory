@@ -41,6 +41,16 @@ class ProfileStore:
                     done INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS inbound_updates (
+                    update_id INTEGER PRIMARY KEY,
+                    status TEXT NOT NULL CHECK(status IN ('processing', 'complete', 'quarantined')),
+                    safe_reason TEXT,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS metadata (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
                 """
             )
         self.path.chmod(0o600)
@@ -116,6 +126,70 @@ class ProfileStore:
                 "UPDATE links SET done = 1 WHERE item_id = ? AND done = 0", (item_id,)
             )
         return cursor.rowcount == 1
+
+    def begin_update(self, update_id: int) -> str:
+        """Reserve an update before effects; an interrupted reservation is quarantined."""
+        now = datetime.now(UTC).isoformat()
+        with self._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT status FROM inbound_updates WHERE update_id = ?", (update_id,)
+            ).fetchone()
+            if row is None:
+                connection.execute(
+                    "INSERT INTO inbound_updates VALUES (?, 'processing', NULL, ?)",
+                    (update_id, now),
+                )
+                return "process"
+            if row["status"] == "processing":
+                connection.execute(
+                    """UPDATE inbound_updates
+                    SET status = 'quarantined', safe_reason = 'ambiguous_effect', updated_at = ?
+                    WHERE update_id = ?""",
+                    (now, update_id),
+                )
+                return "quarantine"
+            return "skip" if row["status"] == "complete" else "quarantine"
+
+    def complete_update(self, update_id: int) -> None:
+        with self._connection() as connection:
+            cursor = connection.execute(
+                """UPDATE inbound_updates SET status = 'complete', updated_at = ?
+                WHERE update_id = ? AND status = 'processing'""",
+                (datetime.now(UTC).isoformat(), update_id),
+            )
+            if cursor.rowcount != 1:
+                raise ProfileStoreError("Inbound update acknowledgement is invalid.")
+
+    def update_status(self, update_id: int) -> str | None:
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT status FROM inbound_updates WHERE update_id = ?", (update_id,)
+            ).fetchone()
+        return None if row is None else str(row["status"])
+
+    def reconciliation_required(self) -> bool:
+        """Return true only for a confirmed ambiguous effect, never a live reservation."""
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM inbound_updates WHERE status = 'quarantined' LIMIT 1"
+            ).fetchone()
+        return row is not None
+
+    def update_offset(self) -> int:
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT value FROM metadata WHERE key = 'telegram_offset'"
+            ).fetchone()
+        return 0 if row is None else int(row["value"])
+
+    def advance_update_offset(self, offset: int) -> None:
+        with self._connection() as connection:
+            connection.execute(
+                """INSERT INTO metadata VALUES ('telegram_offset', ?)
+                ON CONFLICT(key) DO UPDATE SET value = max(CAST(value AS INTEGER), ?)""",
+                (str(offset), offset),
+            )
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

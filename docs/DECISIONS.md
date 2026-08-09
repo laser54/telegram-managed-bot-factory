@@ -4,7 +4,7 @@
 
 | Decision | Rationale |
 |---|---|
-| Distribution/repository name: `telegram-managed-bot-factory` | Descriptive, distinct from generic bot generators, and PyPI returned 404 during repository bootstrap. It is not reserved until upload. |
+| Distribution/repository name: `telegram-managed-bot-factory` | Published as public alpha `0.1.0` on PyPI; that release metadata is immutable. |
 | MCP server name: `bot-factory` | Short and task-focused; it is independent of the Python distribution name. |
 | Separate user-owned manager bot | Avoids conflating Hermes gateway updates with factory updates; makes ownership and runtime boundaries clear. |
 | Persistent worker separate from MCP | MCP/Hermes may be transient; Telegram confirmation updates and child lifecycle are durable work. |
@@ -16,6 +16,8 @@
 | Local stdio first | Best secret boundary and simplest Hermes integration. Remote HTTP is a tested capability, not the first deployment requirement. |
 | Modern MCP with compatibility fallback | Use stable 2026-07-28 core features where applicable and retain the durable `request_id` status flow across all hosts. Do not advertise the experimental Tasks extension until an official Python implementation and host support are proven. |
 | No general AI child profile in v0.1 | Model secrets, costs, tools, and content policy need a separate security design. |
+| Child inbound effects use durable at-most-once attempts plus quarantine | An update is reserved before profile/storage/send effects. Completed collisions are skipped; an interrupted reservation is quarantined on replay because Telegram send success can be ambiguous. Exactly-once external effects are not claimed. |
+| Child reconciliation is promoted into durable Factory state | The instance-local effect ledger is authoritative; manager startup/runtime reconciliation makes the condition visible through request and instance MCP status and prevents restart from relaunching it as healthy. |
 | MIT planned | Maximizes public reuse; validate final licensing and dependency compatibility before release. |
 
 ## Must be proven, not assumed
@@ -27,7 +29,7 @@
 | A managed child can become a manager itself | live disposable experiment | partially explored: false by default; enabling it later remains unverified and is not needed for the safe baseline |
 | Current Hermes can use latest MCP features | actual negotiated/client integration tests | legacy stdio verified with Hermes 0.18.0; modern extensions remain intentionally unclaimed |
 | `hermes mcp test bot-factory` syntax/behavior meets intended flow | real CLI run after server exists | verified 2026-08-08; exactly six tools discovered |
-| Official MCP Registry schema/version at release time | validate current schema before submission | `server.json` validated with publisher 1.7.9 and schema 2025-12-11; publish remains gated on PyPI |
+| Official MCP Registry schema/version at release time | validate current schema before submission | `server.json` version `0.1.0` was validated and published after PyPI `0.1.0` |
 | `io.modelcontextprotocol/tasks` is suitable for v0.1 | stable extension plus official Python SDK and host integration | deferred: the reference extension is experimental and MCP Python SDK 2.0 does not ship its handlers |
 
 The live spike also confirmed that the manager must remain separate from the

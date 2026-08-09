@@ -53,6 +53,9 @@ Telegram поддерживает официальный механизм **Mana
 
 ### Публичный пакет
 
+Статус релиза: public alpha `0.1.0` опубликован 2026-08-09; его PyPI metadata
+неизменяемы. Следующая версия готовится как unreleased `0.1.1`.
+
 - **PyPI package:** `telegram-managed-bot-factory` — доступность имени проверить до релиза.
 - **MCP server name:** `bot-factory`.
 - **Python:** 3.11+.
@@ -346,6 +349,8 @@ runtime/<slug>/                   mode 0700 per child
 - Дубликат update не создаёт второго instance и не переписывает secret.
 - Rotation, deletion и revoke — отдельные explicit actions с подтверждением.
 - При неясном внешнем результате перейти в `reconciliation_required`; не повторять создание автоматически.
+- Child runtime до любого profile/send effect резервирует Telegram `update_id` в instance-local SQLite и хранит poll offset. Завершённый collision является no-op; повтор незавершённой попытки quarantined для reconciliation. Exactly-once внешних Telegram effects не заявляется.
+- Manager при запуске и во время работы переносит durable child quarantine в Factory request/instance state; `factory_get_request` и `factory_list_instances` показывают `reconciliation_required`, и restart не заменяет его на healthy/stopped.
 
 ## 7. Factory manager runtime
 

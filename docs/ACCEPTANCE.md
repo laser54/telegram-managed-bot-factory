@@ -37,11 +37,14 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 - [x] `lead_inbox` displays a data notice, collects minimum data, notifies only its owner, and offers owner-confirmed export/purge.
 - [x] `link_inbox` is owner-only and stores links/notes without fetching/executing URLs.
 - [x] Every profile returns safe `/health` and has a deterministic test suite.
+- [x] Child update IDs and poll offsets survive restart; completed collisions are no-ops and interrupted lead notification, export, and purge effects enter quarantine without silent replay.
+- [x] Child quarantine survives child/manager restart and is surfaced durably as `reconciliation_required` by `factory_get_request` and `factory_list_instances`.
 
 ## E. Operator experience
 
 - [x] `bot-factory install-hermes` completes user-level installation without editing Hermes YAML in the happy path.
 - [x] Installer rejects a textual Hermes connection failure even when the Hermes CLI exits with status zero.
+- [x] Hermes registration uses the direct `mcp add NAME --command PATH` argument contract without stdin injection, config mutation in tests, or network access.
 - [x] Setup checks manager identity, management mode, owner policy, secret store, and worker readiness before start.
 - [x] Setup and Hermes installation create zero child bots; a test child requires a separate explicit request and Telegram confirmation.
 - [x] The generated hardened user unit starts under WSL2 `systemd --user` without a `218/CAPABILITIES` failure.
@@ -59,4 +62,4 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 - [x] PyPI name was rechecked immediately before the release workflow; the production JSON endpoint still returned 404.
 - [x] GitHub Actions uses PyPI Trusted Publishing OIDC with a protected environment, not a long-lived API token.
 - [x] `server.json` is validated against the current Official MCP Registry schema only after real package/version values exist.
-- [x] Public release claims are made only after public GitHub source, PyPI release, Official MCP Registry publication, and live E2E evidence exist.
+- [x] Public `0.1.0` release claims are backed by public GitHub source, PyPI, Official MCP Registry, and live E2E evidence; immutable PyPI metadata is not rewritten.

@@ -44,7 +44,9 @@ ALLOWED_TRANSITIONS: dict[RequestState, frozenset[RequestState]] = {
     RequestState.INSTANCE_MATERIALIZED: frozenset(
         {RequestState.ACTIVE, RequestState.FAILED, RequestState.RECONCILIATION_REQUIRED}
     ),
-    RequestState.ACTIVE: frozenset({RequestState.STOPPED}),
+    RequestState.ACTIVE: frozenset(
+        {RequestState.STOPPED, RequestState.RECONCILIATION_REQUIRED}
+    ),
     RequestState.STOPPED: frozenset({RequestState.ACTIVE, RequestState.RETIRED}),
     RequestState.FAILED: frozenset(),
     RequestState.RECONCILIATION_REQUIRED: frozenset(),
@@ -444,7 +446,13 @@ class FactoryState:
         state: RequestState,
         health: str,
     ) -> None:
-        if health not in {"unknown", "healthy", "stopped", "failed"}:
+        if health not in {
+            "unknown",
+            "healthy",
+            "stopped",
+            "failed",
+            "reconciliation_required",
+        }:
             raise StateError("Instance health is invalid.")
         self.initialize()
         with self._connection() as connection:

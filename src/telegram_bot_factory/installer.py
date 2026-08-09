@@ -27,6 +27,15 @@ def _required_command(name: str) -> str:
     return value
 
 
+def _register_hermes(hermes: str, mcp_command: Path) -> None:
+    subprocess.run(  # noqa: S603
+        [hermes, "mcp", "add", "bot-factory", "--command", str(mcp_command)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
 def install_for_hermes(paths: FactoryPaths | None = None) -> None:
     if os.name != "posix":
         raise InstallError("v0.1 installation supports Linux only.")
@@ -49,20 +58,7 @@ def install_for_hermes(paths: FactoryPaths | None = None) -> None:
             if not executable.is_file():
                 raise InstallError("Installed Factory entry points are unavailable.")
         subprocess.run([str(operator), "setup"], check=True)  # noqa: S603
-        subprocess.run(  # noqa: S603
-            [
-                hermes,
-                "mcp",
-                "add",
-                "bot-factory",
-                "--command",
-                str(mcp_command),
-            ],
-            input="y\ny\n",
-            text=True,
-            check=True,
-            capture_output=True,
-        )
+        _register_hermes(hermes, mcp_command)
         trusted_paths = paths or FactoryPaths.discover()
         install_user_service(manager, trusted_paths)
         test_result = subprocess.run(  # noqa: S603
@@ -77,4 +73,3 @@ def install_for_hermes(paths: FactoryPaths | None = None) -> None:
         print("Hermes registration verified with six Factory tools.")
     except (OSError, subprocess.CalledProcessError) as error:
         raise InstallError("Factory installation did not complete safely.") from error
-

@@ -91,5 +91,6 @@ The exact base path is configurable by trusted local setup, not by MCP. The work
 4. **Duplicate/ambiguous Telegram actions:** idempotency and reconciliation, never blind retry.
 5. **Public lead data:** collection notice, minimum data, owner-only access/export/purge, no data in MCP results or logs.
 6. **MRTR replay/tampering:** AEAD-protected state, short TTL, request/audience and authenticated-principal binding, and server-side single use.
+7. **Child inbound replay/crash:** each instance reserves update IDs before profile and Telegram effects and durably advances its offset after resolution. Completed replays are skipped. A replay of an interrupted attempt is quarantined and changes child health to `reconciliation_required` because a prior send may have succeeded; exactly-once external effects are not promised.
 
 For implementation-level requirements, see [SPECIFICATION.md](SPECIFICATION.md) and [ACCEPTANCE.md](ACCEPTANCE.md).

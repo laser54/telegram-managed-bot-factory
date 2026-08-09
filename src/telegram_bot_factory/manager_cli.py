@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from telegram_bot_factory.config import read_factory_config
 from telegram_bot_factory.models import RequestState
 from telegram_bot_factory.paths import FactoryPaths
+from telegram_bot_factory.profile_store import ProfileStore
 from telegram_bot_factory.runtime import InstanceLauncher, RuntimeProvisionError
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.state import FactoryState, StateError
@@ -34,6 +35,7 @@ async def run_manager() -> None:
     preflight = await worker.preflight()
     if preflight.manager_username.casefold() != config.manager_username.casefold():
         raise RuntimeError("Configured manager identity does not match the credential.")
+    reconcile_child_updates(state, paths)
     recover_active_instances(state, launcher, paths)
     try:
         while not stop.is_set():
@@ -44,6 +46,7 @@ async def run_manager() -> None:
             except TelegramError:
                 await asyncio.sleep(1)
             process_runtime_commands(state, launcher, paths)
+            reconcile_child_updates(state, paths)
     finally:
         launcher.shutdown()
         await worker.close()
@@ -96,6 +99,26 @@ def recover_active_instances(
             state.update_instance_lifecycle(
                 str(instance.slug), RequestState.STOPPED, "failed"
             )
+
+
+def reconcile_child_updates(state: FactoryState, paths: FactoryPaths) -> None:
+    """Surface durable child-effect ambiguity through the Factory control plane."""
+    for instance in state.list_instances():
+        if instance.state is not RequestState.ACTIVE:
+            continue
+        store = ProfileStore(paths.runtime_dir / str(instance.slug))
+        if not store.reconciliation_required():
+            continue
+        state.transition(
+            instance.request_id,
+            RequestState.RECONCILIATION_REQUIRED,
+            "child_effect_ambiguous",
+        )
+        state.update_instance_lifecycle(
+            str(instance.slug),
+            RequestState.RECONCILIATION_REQUIRED,
+            "reconciliation_required",
+        )
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bot-factory-manager")
