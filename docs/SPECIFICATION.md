@@ -142,6 +142,11 @@ uvx --from telegram-managed-bot-factory bot-factory install-hermes
 6. Проверяет `getMe`/`can_manage_bots`, owner allowlist и запускает manager worker only after explicit local confirmation.
 7. Выполняет `hermes mcp test bot-factory` and returns a human-readable success/failure result without tokens.
 
+Exit status Hermes недостаточен для этого шага: Hermes 0.18 может вернуть zero
+после textual connection failure. Installer считает регистрацию успешной только
+после явного результата `Tools discovered: 6`; raw CLI output не становится
+Factory status payload.
+
 One-line install не означает zero-consent: после него пользователь всё равно самостоятельно включает Bot Management Mode в BotFather и один раз скрыто вводит manager token. Это единственные неизбежные security actions; остальное должно быть автоматическим.
 
 Повторный запуск setup после полного enrollment не запрашивает token и не

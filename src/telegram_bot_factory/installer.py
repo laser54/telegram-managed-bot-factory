@@ -16,6 +16,10 @@ class InstallError(RuntimeError):
     """Safe installation failure."""
 
 
+def _hermes_test_verified(output: str) -> bool:
+    return "Connection failed" not in output and "Tools discovered: 6" in output
+
+
 def _required_command(name: str) -> str:
     value = shutil.which(name)
     if value is None:
@@ -57,10 +61,20 @@ def install_for_hermes(paths: FactoryPaths | None = None) -> None:
             input="y\ny\n",
             text=True,
             check=True,
+            capture_output=True,
         )
         trusted_paths = paths or FactoryPaths.discover()
         install_user_service(manager, trusted_paths)
-        subprocess.run([hermes, "mcp", "test", "bot-factory"], check=True)  # noqa: S603
+        test_result = subprocess.run(  # noqa: S603
+            [hermes, "mcp", "test", "bot-factory"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        test_output = test_result.stdout + test_result.stderr
+        if not _hermes_test_verified(test_output):
+            raise InstallError("Hermes could not verify the six-tool Factory catalog.")
+        print("Hermes registration verified with six Factory tools.")
     except (OSError, subprocess.CalledProcessError) as error:
         raise InstallError("Factory installation did not complete safely.") from error
 
