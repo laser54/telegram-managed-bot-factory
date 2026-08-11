@@ -8,7 +8,7 @@ import secrets as random_secrets
 import sys
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramAPIError
+from aiogram.exceptions import TelegramAPIError, TelegramNetworkError, TelegramUnauthorizedError
 
 from telegram_bot_factory.config import (
     FactoryConfig,
@@ -85,8 +85,18 @@ async def run_setup(paths: FactoryPaths | None = None) -> None:
     try:
         try:
             identity = await bot.get_me()
+        except TelegramUnauthorizedError as error:
+            raise SetupError(
+                "Manager token was rejected by Telegram. Check that you entered the current "
+                "token for the dedicated manager bot."
+            ) from error
+        except TelegramNetworkError as error:
+            raise SetupError(
+                "Cannot reach the Telegram API from this host. Check DNS, outbound HTTPS, "
+                "and any firewall before retrying."
+            ) from error
         except TelegramAPIError as error:
-            raise SetupError("Manager identity could not be verified.") from error
+            raise SetupError("Manager identity request was rejected by Telegram.") from error
         if not identity.username:
             raise SetupError("Manager bot must have a username.")
         if not identity.can_manage_bots:

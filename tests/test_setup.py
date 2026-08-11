@@ -53,6 +53,19 @@ class FakeSetupBot:
         return [SimpleNamespace(update_id=10, message=message)]
 
 
+class FakeUnauthorizedError(Exception):
+    pass
+
+
+class UnauthorizedSetupBot:
+    def __init__(self, token: str) -> None:
+        del token
+        self.session = FakeSession()
+
+    async def get_me(self) -> object:
+        raise FakeUnauthorizedError()
+
+
 @pytest.mark.asyncio
 async def test_setup_accepts_manager_credential_only_through_hidden_prompt(
     tmp_path: Path,
@@ -102,3 +115,17 @@ async def test_setup_reuses_existing_secret_without_prompt_or_owner_polling(
     config = read_factory_config(paths.config_dir / "config.json")
     assert config.owner_allowlist == [42]
     assert LocalFileSecretStore(paths).read_manager() == SENTINEL
+
+
+@pytest.mark.asyncio
+async def test_setup_explains_when_telegram_rejects_manager_token(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(factory_setup.getpass, "getpass", lambda _prompt: SENTINEL)
+    monkeypatch.setattr(factory_setup, "Bot", UnauthorizedSetupBot)
+    monkeypatch.setattr(factory_setup, "TelegramUnauthorizedError", FakeUnauthorizedError)
+
+    with pytest.raises(factory_setup.SetupError, match="token was rejected by Telegram") as error:
+        await factory_setup.run_setup(FactoryPaths.under(tmp_path))
+
+    assert SENTINEL not in str(error.value)

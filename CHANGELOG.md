@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.1] - 2026-08-11
+
+### Fixed
+
+- Explain whether Telegram rejected the manager token or the VPS cannot reach the Telegram API, without exposing the credential.
+
 ## [0.2.0] - 2026-08-11
 
 ### Changed

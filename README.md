@@ -9,7 +9,7 @@ into isolated, useful child bots. Ask Hermes for a supported bot, confirm that
 specific creation in Telegram, and the persistent Factory worker retrieves and
 contains the child credential without exposing it to the model or MCP.
 
-Version `0.2.0` is terminal-only: no Desktop bootstrap exists.
+Version `0.2.1` is terminal-only: no Desktop bootstrap exists.
 Each PyPI version is immutable; install the pinned release below.
 
 ## Why this matters
@@ -26,7 +26,7 @@ Requires Linux with `systemd --user`, Python 3.11–3.14, [uv](https://docs.astr
 Hermes 0.18, and a separate Telegram bot with Bot Management Mode enabled.
 
 ```bash
-uvx --from telegram-managed-bot-factory==0.2.0 bot-factory install-hermes
+uvx --from telegram-managed-bot-factory==0.2.1 bot-factory install-hermes
 ```
 
 The local installer first verifies that `systemd --user` is usable, then securely
