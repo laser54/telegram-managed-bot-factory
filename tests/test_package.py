@@ -9,7 +9,7 @@ from telegram_bot_factory.cli import main
 
 
 def test_package_version() -> None:
-    assert __version__ == "0.2.0"
+    assert __version__ == "0.2.1"
 
 
 def test_release_metadata_matches_package_version() -> None:
