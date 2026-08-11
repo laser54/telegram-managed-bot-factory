@@ -30,6 +30,7 @@ def _required_command(name: str) -> str:
 
 
 def _register_hermes(hermes: str, mcp_command: Path) -> None:
+    """Register through Hermes' non-secret CLI contract without stdin injection."""
     subprocess.run(  # noqa: S603
         [hermes, "mcp", "add", "bot-factory", "--command", str(mcp_command)],
         check=True,
@@ -40,7 +41,7 @@ def _register_hermes(hermes: str, mcp_command: Path) -> None:
 
 def install_for_hermes(paths: FactoryPaths | None = None) -> None:
     if os.name != "posix":
-        raise InstallError("v0.1 installation supports Linux only.")
+        raise InstallError("Factory installation supports Linux only.")
     uv = _required_command("uv")
     hermes = _required_command("hermes")
     package = f"telegram-managed-bot-factory=={__version__}"

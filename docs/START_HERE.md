@@ -41,7 +41,7 @@ Completed after the spike passed:
 3. Local `SecretStore` with verified `0700` directories and `0600` files.
 4. Persistent manager worker with durable offset and idempotent update matching.
 5. Isolated child runtime and four bounded built-in profiles.
-6. Six-tool dual-era operational MCP control plane plus a one-tool bootstrap catalog for unconfigured or unhealthy installations that opens local Desktop onboarding without accepting secrets.
+6. Six-tool dual-era operational MCP control plane, registered only after terminal-only enrollment and worker-health verification.
 7. Fake Telegram integration and modern/legacy protocol acceptance tests.
 8. Linux setup, hardened user service, Hermes registration, and trusted release workflows.
 

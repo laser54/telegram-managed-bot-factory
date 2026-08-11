@@ -2,6 +2,14 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] - 2026-08-11
+
+### Changed
+
+- Replace Desktop first-run onboarding and the temporary MCP bootstrap catalog with one terminal-only `bot-factory install-hermes` flow for the Linux worker host.
+- Make an unconfigured or unhealthy Factory MCP fail closed with a safe terminal-only repair instruction rather than attempting to launch a GUI terminal.
+- Retain the verified non-interactive Hermes CLI registration contract so terminal setup remains a single command.
+
 ## [0.1.3] - 2026-08-11
 
 ### Added
