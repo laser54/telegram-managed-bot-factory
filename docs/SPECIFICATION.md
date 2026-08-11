@@ -189,28 +189,20 @@ MCP запускается Hermes лишь на время сессии, поэ�
 
 MCP-инструмент **никогда не принимает token строкой**. Token нельзя отправлять Hermes в чат, передавать в MCP argument, помещать в YAML, shell history или CLI argument `--token ...`.
 
-До enrollment MCP обязан успешно проходить discovery с отдельным bootstrap catalog,
-содержащим только no-argument `factory_launch_setup`. Hermes Desktop вызывает его
-вместо вопроса о token. На локальном Linux runtime tool открывает terminal с
-`bot-factory onboard --hold`; terminal получает только allowlisted GUI/session
-environment variables. Wizard ставит pinned persistent `uv tool`, проверяет
-`systemd --user` до hidden prompt, выполняет enrollment, installs unit и требует
-active service. После MCP reload bootstrap catalog заменяется ровно шестью
-operational tools.
-
-Remote/headless MCP runtime не может открыть terminal на клиентском ноутбуке.
-В этом случае UX честно требует выполнить `bot-factory onboard` в terminal на
-самом runtime host; token всё равно не запрашивается в chat.
+Factory не имеет Desktop launcher и не предоставляет bootstrap MCP catalog. До
+enrollment или при unhealthy worker MCP fail-closed с безопасной инструкцией
+выполнить установку/repair в interactive terminal на том же Linux host. Token всё
+равно не запрашивается в chat.
 
 Первичная передача секрета выполняется вне агентского диалога интерактивным локальным setup-wizard:
 
 ```text
-bot-factory onboard
+bot-factory install-hermes
 ```
 
-`bot-factory setup` остаётся low-level secret enrollment command для диагностики;
-нормальный first run использует `onboard`, потому что успешный UX обязан также
-установить и проверить persistent worker.
+Это единственная публичная команда first run: она ставит pinned persistent `uv tool`,
+проверяет `systemd --user` до hidden prompt, выполняет enrollment, запускает и
+проверяет worker, затем регистрирует шесть MCP tools в Hermes.
 
 ### Мастер настройки — progressive disclosure
 

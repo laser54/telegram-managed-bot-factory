@@ -126,8 +126,8 @@ async def run_setup(paths: FactoryPaths | None = None) -> None:
 def setup_main(paths: FactoryPaths | None = None) -> None:
     if not sys.stdin.isatty():
         raise SetupError(
-            "Local setup requires an interactive terminal. Open a local graphical terminal "
-            "and run 'bot-factory onboard'; never send the manager credential through chat "
+            "Local setup requires an interactive terminal on this Linux host. Run "
+            "'bot-factory install-hermes'; never send the manager credential through chat "
             "or piped input."
         )
     asyncio.run(run_setup(paths))

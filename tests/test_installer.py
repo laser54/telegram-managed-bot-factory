@@ -1,7 +1,14 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from telegram_bot_factory.installer import _hermes_test_verified, _register_hermes
+import pytest
+
+from telegram_bot_factory.installer import (
+    InstallError,
+    _hermes_test_verified,
+    _register_hermes,
+    install_for_hermes,
+)
 
 
 def test_hermes_result_requires_exact_six_tool_success() -> None:
@@ -27,3 +34,10 @@ def test_hermes_add_uses_direct_cli_arguments_without_stdin() -> None:
         capture_output=True,
         text=True,
     )
+
+
+def test_non_posix_install_error_is_version_agnostic(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("telegram_bot_factory.installer.os.name", "nt")
+
+    with pytest.raises(InstallError, match="Factory installation supports Linux only"):
+        install_for_hermes()

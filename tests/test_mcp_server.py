@@ -11,7 +11,6 @@ from mcp_types import ElicitResult, InputRequiredResult
 import telegram_bot_factory.mcp_server as mcp_server
 from telegram_bot_factory.config import FactoryConfig, write_factory_config
 from telegram_bot_factory.mcp_server import create_mcp_server
-from telegram_bot_factory.onboarding import OnboardingLaunchResult
 from telegram_bot_factory.paths import FactoryPaths
 from tests.test_service import ready_service
 
@@ -25,38 +24,7 @@ EXPECTED_TOOLS = [
 ]
 
 
-@pytest.mark.asyncio
-async def test_unconfigured_server_exposes_only_secure_local_setup_launcher() -> None:
-    launches = 0
-
-    def launch_setup() -> OnboardingLaunchResult:
-        nonlocal launches
-        launches += 1
-        return OnboardingLaunchResult(
-            launched=True,
-            status="setup_terminal_opened",
-            next_action="Complete setup in the local terminal, then reload MCP tools.",
-        )
-
-    server = create_mcp_server(None, setup_launcher=launch_setup)
-    async with Client(server) as client:
-        catalog = await client.list_tools()
-        result = await client.call_tool("factory_launch_setup", {})
-
-    assert [tool.name for tool in catalog.tools] == ["factory_launch_setup"]
-    assert launches == 1
-    assert result.is_error is False
-    assert result.structured_content == {
-        "launched": True,
-        "status": "setup_terminal_opened",
-        "next_action": "Complete setup in the local terminal, then reload MCP tools.",
-    }
-    serialized = json.dumps(result.structured_content).casefold()
-    assert "token" not in serialized
-    assert "credential" not in serialized
-
-
-def test_configured_but_unhealthy_worker_stays_in_safe_bootstrap_mode(
+def test_unconfigured_or_unhealthy_factory_refuses_mcp_startup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     paths = FactoryPaths.under(tmp_path)
@@ -72,7 +40,8 @@ def test_configured_but_unhealthy_worker_stays_in_safe_bootstrap_mode(
     monkeypatch.setattr(mcp_server.FactoryPaths, "discover", lambda: paths)
     monkeypatch.setattr(mcp_server, "user_service_is_ready", lambda: False)
 
-    assert mcp_server.default_service() is None
+    with pytest.raises(mcp_server.FactoryMCPStartupError, match="terminal"):
+        mcp_server.default_service()
 
 
 CREATE_ARGUMENTS = {

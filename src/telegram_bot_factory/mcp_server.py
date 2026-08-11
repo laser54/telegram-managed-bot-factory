@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from collections.abc import Callable, Sequence
+import sys
+from collections.abc import Sequence
 from typing import Any, Literal
 from uuid import UUID
 
@@ -27,7 +28,6 @@ from telegram_bot_factory.models import (
     ProfileConfig,
     Slug,
 )
-from telegram_bot_factory.onboarding import OnboardingLaunchResult, launch_setup_terminal
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.service import (
@@ -65,32 +65,27 @@ class StrictSchemaMCPServer(MCPServer[None]):
         return await super().call_tool(name, arguments, context)
 
 
+class FactoryMCPStartupError(RuntimeError):
+    """Safe terminal-only startup failure for an unconfigured or unhealthy Factory."""
+
+
 def create_mcp_server(
-    service: FactoryService | None,
+    service: FactoryService,
     *,
     request_state_security: RequestStateSecurity | None = None,
-    setup_launcher: Callable[[], OnboardingLaunchResult] = launch_setup_terminal,
 ) -> MCPServer[None]:
     server: MCPServer[None] = StrictSchemaMCPServer(
         name="bot-factory",
         title="Bot Factory for Telegram Managed Bots",
         description="Provision owner-confirmed isolated Telegram bot instances.",
         instructions=(
-            "Never request or return Telegram credentials. When setup is required, call "
-            "factory_launch_setup so the secret is entered only in the local terminal."
+            "Never request or return Telegram credentials. Factory is installed and repaired "
+            "only from an interactive terminal on its Linux host."
         ),
         version=__version__,
         request_state_security=request_state_security,
     )
 
-    if service is None:
-
-        @server.tool(name="factory_launch_setup", structured_output=True)
-        def factory_launch_setup() -> OnboardingLaunchResult:
-            """Open secure local setup; never ask for a manager credential in chat or MCP."""
-            return setup_launcher()
-
-        return server
 
     @server.tool(name="factory_preflight", structured_output=True)
     def factory_preflight() -> PreflightResult:
@@ -169,11 +164,14 @@ def create_mcp_server(
     return server
 
 
-def default_service() -> FactoryService | None:
+def default_service() -> FactoryService:
     paths = FactoryPaths.discover()
     config_path = paths.config_dir / "config.json"
     if not config_path.is_file() or not user_service_is_ready():
-        return None
+        raise FactoryMCPStartupError(
+            "Factory is not configured or its worker is unhealthy. Complete or repair it "
+            "from an interactive terminal on this Linux host; never provide credentials to MCP."
+        )
     config = read_factory_config(config_path)
     return FactoryService(
         FactoryState(paths.database_path),
@@ -193,7 +191,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     arguments = parser.parse_args(argv)
-    server = create_mcp_server(default_service())
+    try:
+        service = default_service()
+    except FactoryMCPStartupError as error:
+        print(f"Factory MCP unavailable: {error}", file=sys.stderr)
+        return 1
+    server = create_mcp_server(service)
     transport: Literal["stdio", "streamable-http"] = arguments.transport
     server.run(transport=transport)
     return 0

@@ -117,7 +117,7 @@ def install_user_service(
     unit_dir: Path | None = None,
 ) -> Path:
     if os.name != "posix":
-        raise SystemdInstallError("The v0.1 worker service supports Linux only.")
+        raise SystemdInstallError("The Factory worker service supports Linux only.")
     destination_dir = unit_dir or (Path.home() / ".config" / "systemd" / "user")
     destination_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     unit_path = destination_dir / SERVICE_NAME
