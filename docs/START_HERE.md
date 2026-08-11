@@ -41,13 +41,14 @@ Completed after the spike passed:
 3. Local `SecretStore` with verified `0700` directories and `0600` files.
 4. Persistent manager worker with durable offset and idempotent update matching.
 5. Isolated child runtime and four bounded built-in profiles.
-6. Six-tool dual-era MCP control plane.
+6. Six-tool dual-era operational MCP control plane plus a one-tool bootstrap catalog for unconfigured or unhealthy installations that opens local Desktop onboarding without accepting secrets.
 7. Fake Telegram integration and modern/legacy protocol acceptance tests.
 8. Linux setup, hardened user service, Hermes registration, and trusted release workflows.
 
 ## Non-negotiable invariants
 
 - No secret crosses an MCP tool boundary.
+- First-run agents must call the no-argument local setup launcher and must never ask the user to paste a manager credential into chat.
 - No manager or child token appears in logs, state records, traces, exceptions, source, docs, test fixtures, CI artifacts, or package distributions.
 - No external side effect is auto-retried after an ambiguous response.
 - A child can access only its own token and instance-local state.

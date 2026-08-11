@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any, Literal
 from uuid import UUID
 
@@ -27,6 +27,7 @@ from telegram_bot_factory.models import (
     ProfileConfig,
     Slug,
 )
+from telegram_bot_factory.onboarding import OnboardingLaunchResult, launch_setup_terminal
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.service import (
@@ -38,6 +39,7 @@ from telegram_bot_factory.service import (
     RuntimeActionResult,
 )
 from telegram_bot_factory.state import FactoryState
+from telegram_bot_factory.systemd import user_service_is_ready
 
 
 class StrictSchemaMCPServer(MCPServer[None]):
@@ -64,18 +66,31 @@ class StrictSchemaMCPServer(MCPServer[None]):
 
 
 def create_mcp_server(
-    service: FactoryService,
+    service: FactoryService | None,
     *,
     request_state_security: RequestStateSecurity | None = None,
+    setup_launcher: Callable[[], OnboardingLaunchResult] = launch_setup_terminal,
 ) -> MCPServer[None]:
     server: MCPServer[None] = StrictSchemaMCPServer(
         name="bot-factory",
         title="Bot Factory for Telegram Managed Bots",
         description="Provision owner-confirmed isolated Telegram bot instances.",
-        instructions="Never request or return Telegram credentials.",
+        instructions=(
+            "Never request or return Telegram credentials. When setup is required, call "
+            "factory_launch_setup so the secret is entered only in the local terminal."
+        ),
         version=__version__,
         request_state_security=request_state_security,
     )
+
+    if service is None:
+
+        @server.tool(name="factory_launch_setup", structured_output=True)
+        def factory_launch_setup() -> OnboardingLaunchResult:
+            """Open secure local setup; never ask for a manager credential in chat or MCP."""
+            return setup_launcher()
+
+        return server
 
     @server.tool(name="factory_preflight", structured_output=True)
     def factory_preflight() -> PreflightResult:
@@ -154,9 +169,12 @@ def create_mcp_server(
     return server
 
 
-def default_service() -> FactoryService:
+def default_service() -> FactoryService | None:
     paths = FactoryPaths.discover()
-    config = read_factory_config(paths.config_dir / "config.json")
+    config_path = paths.config_dir / "config.json"
+    if not config_path.is_file() or not user_service_is_ready():
+        return None
+    config = read_factory_config(config_path)
     return FactoryService(
         FactoryState(paths.database_path),
         LocalFileSecretStore(paths),

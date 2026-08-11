@@ -22,7 +22,8 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 
 ## C. MCP product contract
 
-- [x] Safe default allowlist is exactly `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, and `factory_stop_instance`.
+- [x] Safe configured allowlist is exactly `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, and `factory_stop_instance`.
+- [x] Before local enrollment exists, discovery succeeds with only `factory_launch_setup`; it accepts no arguments and opens hidden-input setup outside chat/MCP.
 - [x] Tool input/output uses strict Pydantic/JSON Schema 2020-12 models and returns structured safe status.
 - [x] Creation returns durable explicit `request_id`; `factory_get_request` works after an MCP client/process restart.
 - [x] Modern test client verifies `server/discover`, stateless Streamable HTTP, header validation, deterministic catalog, private cache hints, and trace redaction.
@@ -43,6 +44,8 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 ## E. Operator experience
 
 - [x] `bot-factory install-hermes` completes user-level installation without editing Hermes YAML in the happy path.
+- [x] Unconfigured Hermes Desktop discovery does not crash or request a token in chat; it exposes a no-argument launcher for local terminal onboarding.
+- [x] Desktop onboarding installs a pinned persistent `uv tool`, verifies `systemd --user` before hidden credential input, and requires the worker service to be active with a fresh heartbeat.
 - [x] Installer rejects a textual Hermes connection failure even when the Hermes CLI exits with status zero.
 - [x] Hermes registration uses the direct `mcp add NAME --command PATH` argument contract without stdin injection, config mutation in tests, or network access.
 - [x] Setup checks manager identity, management mode, owner policy, secret store, and worker readiness before start.

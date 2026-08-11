@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import getpass
 import secrets as random_secrets
+import sys
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
@@ -123,4 +124,10 @@ async def run_setup(paths: FactoryPaths | None = None) -> None:
 
 
 def setup_main(paths: FactoryPaths | None = None) -> None:
+    if not sys.stdin.isatty():
+        raise SetupError(
+            "Local setup requires an interactive terminal. Open a local graphical terminal "
+            "and run 'bot-factory onboard'; never send the manager credential through chat "
+            "or piped input."
+        )
     asyncio.run(run_setup(paths))

@@ -8,8 +8,10 @@ import subprocess
 from pathlib import Path
 
 from telegram_bot_factory import __version__
+from telegram_bot_factory.onboarding import OnboardingError, run_onboarding
 from telegram_bot_factory.paths import FactoryPaths
-from telegram_bot_factory.systemd import install_user_service
+from telegram_bot_factory.setup import SetupError
+from telegram_bot_factory.systemd import SystemdInstallError
 
 
 class InstallError(RuntimeError):
@@ -57,10 +59,9 @@ def install_for_hermes(paths: FactoryPaths | None = None) -> None:
         for executable in (manager, operator, mcp_command):
             if not executable.is_file():
                 raise InstallError("Installed Factory entry points are unavailable.")
-        subprocess.run([str(operator), "setup"], check=True)  # noqa: S603
-        _register_hermes(hermes, mcp_command)
         trusted_paths = paths or FactoryPaths.discover()
-        install_user_service(manager, trusted_paths)
+        run_onboarding(manager, trusted_paths)
+        _register_hermes(hermes, mcp_command)
         test_result = subprocess.run(  # noqa: S603
             [hermes, "mcp", "test", "bot-factory"],
             check=True,
@@ -71,5 +72,7 @@ def install_for_hermes(paths: FactoryPaths | None = None) -> None:
         if not _hermes_test_verified(test_output):
             raise InstallError("Hermes could not verify the six-tool Factory catalog.")
         print("Hermes registration verified with six Factory tools.")
+    except (OnboardingError, SetupError, SystemdInstallError) as error:
+        raise InstallError(str(error)) from error
     except (OSError, subprocess.CalledProcessError) as error:
         raise InstallError("Factory installation did not complete safely.") from error

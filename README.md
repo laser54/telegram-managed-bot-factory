@@ -9,8 +9,8 @@ into isolated, useful child bots. Ask Hermes for a supported bot, confirm that
 specific creation in Telegram, and the persistent Factory worker retrieves and
 contains the child credential without exposing it to the model or MCP.
 
-Public alpha `0.1.2` is published on [PyPI](https://pypi.org/project/telegram-managed-bot-factory/0.1.2/).
-Each PyPI version is immutable; install the current release below.
+Version `0.1.3` adds secure Hermes Desktop first-run onboarding.
+Each PyPI version is immutable; install the pinned release below.
 
 ## Install
 
@@ -18,12 +18,37 @@ Requires Linux with `systemd --user`, Python 3.11–3.14, [uv](https://docs.astr
 Hermes 0.18, and a separate Telegram bot with Bot Management Mode enabled.
 
 ```bash
-uvx --from telegram-managed-bot-factory==0.1.2 bot-factory install-hermes
+uvx --from telegram-managed-bot-factory==0.1.3 bot-factory install-hermes
 ```
 
-The local installer securely prompts once for the manager credential, enrolls
-the owner, installs the persistent user service, registers the six-tool stdio
-server with Hermes, and verifies discovery. It creates no child bot.
+The local installer first verifies that `systemd --user` is usable, then securely
+prompts once for the manager credential, enrolls the owner, installs and verifies
+the persistent user service and a fresh worker heartbeat, registers the six-tool
+stdio server with Hermes, and verifies discovery. It creates no child bot.
+
+### First connection from Hermes Desktop
+
+A not-yet-configured Factory, or one whose mandatory user service is unhealthy, now
+starts successfully instead of crashing during MCP discovery. It exposes one temporary
+bootstrap tool, `factory_launch_setup`.
+Hermes should call that tool rather than asking for a token. On a local Linux
+desktop it opens a terminal running the complete onboarding wizard:
+
+1. install the exact Factory version as a persistent `uv tool` (the worker unit
+   never points at an evictable `uvx` cache);
+2. verify `systemd --user` **before** requesting any credential;
+3. accept the manager token only through hidden local terminal input;
+4. enroll the owner, install the service, require it to be active, and observe a
+   fresh worker heartbeat.
+
+When the terminal reports success, reload/reconnect MCP tools. The temporary
+bootstrap tool is replaced by the normal six-tool Factory catalog. The token
+must never be pasted into Hermes chat, an MCP argument, or a shell command.
+
+If Hermes Desktop is connected to a remote/headless runtime, it cannot open a
+terminal on the user's laptop. Open a terminal on the Linux host that runs the
+MCP and execute `bot-factory onboard`; do not send the credential through chat.
+The wizard keeps failures visible when it was opened by Desktop.
 
 ## How it works
 

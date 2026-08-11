@@ -20,7 +20,12 @@ If a credential may have been exposed, revoke or rotate it in Telegram before fu
 - filesystem permissions, symlink/traversal defense, and subprocess isolation;
 - owner authorization and profile data handling;
 - duplicate, replay, reconciliation, and MRTR request-state behavior;
-- MCP result, error, log, and trace redaction.
+- MCP result, error, log, and trace redaction;
+- captured-PTY and non-interactive prompt injection during first-run onboarding.
+
+Manager credentials are accepted only by the local hidden prompt in an interactive
+terminal. Setup fails closed for piped stdin. Do not relay that prompt or its answer
+through an agent, chat, MCP argument, command line, environment variable, log, or trace.
 
 ## Disclosure rules
 
