@@ -17,7 +17,7 @@ def test_hermes_result_requires_exact_six_tool_success() -> None:
     assert _hermes_test_verified("Connected\nTools discovered: 5") is False
 
 
-def test_hermes_add_uses_direct_cli_arguments_without_stdin() -> None:
+def test_hermes_add_keeps_required_interactive_confirmation_visible() -> None:
     with patch("telegram_bot_factory.installer.subprocess.run") as run:
         _register_hermes("/usr/bin/hermes", Path("/opt/factory/bot-factory-mcp"))
 
@@ -31,8 +31,6 @@ def test_hermes_add_uses_direct_cli_arguments_without_stdin() -> None:
             "/opt/factory/bot-factory-mcp",
         ],
         check=True,
-        capture_output=True,
-        text=True,
     )
 
 

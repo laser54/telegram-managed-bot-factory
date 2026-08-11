@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import getpass
 import os
 import shutil
 import subprocess
@@ -39,6 +40,41 @@ def ensure_user_systemd_available() -> None:
             "systemd --user is unavailable. Run 'systemctl --user show-environment' "
             "in this local terminal, enable a user systemd session, and retry. No worker "
             "was started."
+        ) from error
+
+
+def ensure_user_lingering() -> None:
+    """Keep the user manager alive after the interactive SSH session exits."""
+    loginctl = shutil.which("loginctl")
+    username = getpass.getuser()
+    if loginctl is None:
+        raise SystemdInstallError(
+            "loginctl is unavailable, so Factory cannot ensure the worker survives logout."
+        )
+    try:
+        current = subprocess.run(  # noqa: S603 - resolved trusted loginctl executable
+            [loginctl, "show-user", username, "-p", "Linger", "--value"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if current != "yes":
+            subprocess.run(  # noqa: S603 - resolved trusted loginctl executable
+                [loginctl, "enable-linger", username], check=True
+            )
+            verified = subprocess.run(  # noqa: S603 - resolved trusted loginctl executable
+                [loginctl, "show-user", username, "-p", "Linger", "--value"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            if verified != "yes":
+                raise SystemdInstallError(
+                    "systemd lingering is not enabled, so Factory cannot survive logout."
+                )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise SystemdInstallError(
+            "Could not enable systemd lingering for this user, so Factory cannot survive logout."
         ) from error
 
 

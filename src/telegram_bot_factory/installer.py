@@ -30,12 +30,10 @@ def _required_command(name: str) -> str:
 
 
 def _register_hermes(hermes: str, mcp_command: Path) -> None:
-    """Register through Hermes' non-secret CLI contract without stdin injection."""
+    """Register through Hermes' current terminal so confirmations remain visible."""
     subprocess.run(  # noqa: S603
         [hermes, "mcp", "add", "bot-factory", "--command", str(mcp_command)],
         check=True,
-        capture_output=True,
-        text=True,
     )
 
 

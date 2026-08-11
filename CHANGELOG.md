@@ -2,6 +2,14 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.2] - 2026-08-11
+
+### Fixed
+
+- Enable and verify `systemd` lingering before setup so the worker survives SSH logout.
+- Keep Hermes MCP registration in the current terminal so required confirmations are visible instead of hanging behind captured output.
+- Publish one exact, cache-refreshing terminal installation command and a release-versioned PyPI badge.
+
 ## [0.2.1] - 2026-08-11
 
 ### Fixed

@@ -10,6 +10,7 @@ from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.setup import setup_main
 from telegram_bot_factory.state import FactoryState
 from telegram_bot_factory.systemd import (
+    ensure_user_lingering,
     ensure_user_systemd_available,
     install_user_service,
     verify_user_service_active,
@@ -51,6 +52,7 @@ def run_onboarding(manager: Path, paths: FactoryPaths | None = None) -> None:
     """Run local setup and install the mandatory persistent systemd worker."""
     trusted_paths = paths or FactoryPaths.discover()
     ensure_user_systemd_available()
+    ensure_user_lingering()
     setup_main(trusted_paths)
     service_start = datetime.now(UTC)
     install_user_service(manager, trusted_paths)

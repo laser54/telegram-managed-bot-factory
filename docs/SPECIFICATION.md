@@ -132,17 +132,17 @@ Server name, README marker, PyPI identifier и release versions должны с�
 Для пользователя Hermes основной happy-path начинается одной командой:
 
 ```bash
-uvx --from telegram-managed-bot-factory bot-factory install-hermes
+uvx --refresh --from telegram-managed-bot-factory==0.2.2 bot-factory install-hermes
 ```
 
 Команда должна работать без `sudo` и без ручного редактирования YAML. Она:
 
-1. Проверяет Python/`uv`, версию Hermes, доступную user-level install location и рабочий `systemd --user` manager **до** запроса credential.
+1. Проверяет Python/`uv`, версию Hermes, доступную user-level install location и рабочий `systemd --user` manager, включает и подтверждает `loginctl` lingering для текущего пользователя **до** запроса credential.
 2. Устанавливает или обновляет package в изолированном persistent `uv tool` environment; `ExecStart` не может ссылаться на временный `uvx` cache.
 3. Открывает setup wizard. Он передаёт manager token только через local hidden `getpass` prompt — **не** через Hermes, MCP tool, command-line argument или config file.
 4. Проверяет `getMe`/`can_manage_bots` и owner allowlist.
 5. Устанавливает hardened `systemd --user` unit, запускает manager worker и требует active state.
-6. Регистрирует безопасный stdio MCP command в Hermes с configured allowlist только `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, `factory_stop_instance`; prompts/resources disabled by default.
+6. Регистрирует безопасный stdio MCP command в Hermes с configured allowlist только `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, `factory_stop_instance`; обязательное подтверждение Hermes остаётся видимым в текущем терминале.
 7. Выполняет `hermes mcp test bot-factory` and returns a human-readable success/failure result without tokens.
 
 Установка и setup создают **ноль child bots**. Test/demo child не создаётся

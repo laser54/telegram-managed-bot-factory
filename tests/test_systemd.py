@@ -5,6 +5,7 @@ import pytest
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.systemd import (
     SystemdInstallError,
+    ensure_user_lingering,
     ensure_user_systemd_available,
     render_user_unit,
     user_service_is_ready,
@@ -45,6 +46,32 @@ def test_systemd_preflight_checks_user_manager_without_mutation(
     ensure_user_systemd_available()
 
     assert calls == [["/usr/bin/systemctl", "--user", "show-environment"]]
+
+
+def test_user_lingering_is_enabled_before_terminal_can_close(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+    linger_checks = iter(["no\n", "yes\n"])
+
+    def run(command: list[str], **kwargs: object) -> object:
+        del kwargs
+        calls.append(command)
+        if command[1] == "show-user":
+            return type("Result", (), {"stdout": next(linger_checks)})()
+        return object()
+
+    monkeypatch.setattr("telegram_bot_factory.systemd.shutil.which", lambda _: "/usr/bin/loginctl")
+    monkeypatch.setattr("telegram_bot_factory.systemd.subprocess.run", run)
+    monkeypatch.setattr("telegram_bot_factory.systemd.getpass.getuser", lambda: "root")
+
+    ensure_user_lingering()
+
+    assert calls == [
+        ["/usr/bin/loginctl", "show-user", "root", "-p", "Linger", "--value"],
+        ["/usr/bin/loginctl", "enable-linger", "root"],
+        ["/usr/bin/loginctl", "show-user", "root", "-p", "Linger", "--value"],
+    ]
 
 
 def test_user_service_readiness_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
