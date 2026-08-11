@@ -137,12 +137,12 @@ uvx --from telegram-managed-bot-factory bot-factory install-hermes
 
 Команда должна работать без `sudo` и без ручного редактирования YAML. Она:
 
-1. Проверяет Python/`uv`, версию Hermes и доступную user-level install location.
-2. Устанавливает или обновляет package в изолированном user environment.
-3. Регистрирует безопасный stdio MCP command в Hermes с allowlist только `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, `factory_stop_instance`; prompts/resources disabled by default.
-4. Создаёт non-secret Factory home/state directories с корректными permissions.
-5. Открывает setup wizard. Он передаёт manager token только через local hidden `getpass` prompt — **не** через Hermes, MCP tool, command-line argument или config file.
-6. Проверяет `getMe`/`can_manage_bots`, owner allowlist и запускает manager worker only after explicit local confirmation.
+1. Проверяет Python/`uv`, версию Hermes, доступную user-level install location и рабочий `systemd --user` manager **до** запроса credential.
+2. Устанавливает или обновляет package в изолированном persistent `uv tool` environment; `ExecStart` не может ссылаться на временный `uvx` cache.
+3. Открывает setup wizard. Он передаёт manager token только через local hidden `getpass` prompt — **не** через Hermes, MCP tool, command-line argument или config file.
+4. Проверяет `getMe`/`can_manage_bots` и owner allowlist.
+5. Устанавливает hardened `systemd --user` unit, запускает manager worker и требует active state.
+6. Регистрирует безопасный stdio MCP command в Hermes с configured allowlist только `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, `factory_stop_instance`; prompts/resources disabled by default.
 7. Выполняет `hermes mcp test bot-factory` and returns a human-readable success/failure result without tokens.
 
 Установка и setup создают **ноль child bots**. Test/demo child не создаётся
@@ -189,11 +189,28 @@ MCP запускается Hermes лишь на время сессии, поэ�
 
 MCP-инструмент **никогда не принимает token строкой**. Token нельзя отправлять Hermes в чат, передавать в MCP argument, помещать в YAML, shell history или CLI argument `--token ...`.
 
+До enrollment MCP обязан успешно проходить discovery с отдельным bootstrap catalog,
+содержащим только no-argument `factory_launch_setup`. Hermes Desktop вызывает его
+вместо вопроса о token. На локальном Linux runtime tool открывает terminal с
+`bot-factory onboard --hold`; terminal получает только allowlisted GUI/session
+environment variables. Wizard ставит pinned persistent `uv tool`, проверяет
+`systemd --user` до hidden prompt, выполняет enrollment, installs unit и требует
+active service. После MCP reload bootstrap catalog заменяется ровно шестью
+operational tools.
+
+Remote/headless MCP runtime не может открыть terminal на клиентском ноутбуке.
+В этом случае UX честно требует выполнить `bot-factory onboard` в terminal на
+самом runtime host; token всё равно не запрашивается в chat.
+
 Первичная передача секрета выполняется вне агентского диалога интерактивным локальным setup-wizard:
 
 ```text
-bot-factory setup
+bot-factory onboard
 ```
+
+`bot-factory setup` остаётся low-level secret enrollment command для диагностики;
+нормальный first run использует `onboard`, потому что успешный UX обязан также
+установить и проверить persistent worker.
 
 ### Мастер настройки — progressive disclosure
 

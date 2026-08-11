@@ -2,6 +2,19 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] - 2026-08-11
+
+### Added
+
+- Add an MCP bootstrap catalog for unconfigured or unhealthy installations that opens secret-bearing setup in a local terminal instead of requesting a Telegram credential through chat.
+- Add `bot-factory onboard` for the complete persistent-worker setup path.
+
+### Fixed
+
+- Verify `systemd --user` before any credential prompt and require the worker service to be active before onboarding succeeds.
+- Install the exact package version as a durable `uv tool` so systemd never points at an evictable `uvx` cache.
+- Keep Desktop-launched setup failures visible and sanitize the environment inherited by the setup terminal.
+
 ## [0.1.2] - 2026-08-09
 
 ### Fixed

@@ -13,6 +13,13 @@ from tests.sentinels import token_shaped_sentinel
 SENTINEL = token_shaped_sentinel("TEST_SENTINEL_MANAGER")
 
 
+def test_setup_main_refuses_noninteractive_input(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(factory_setup.sys.stdin, "isatty", lambda: False)
+
+    with pytest.raises(factory_setup.SetupError, match="interactive terminal"):
+        factory_setup.setup_main()
+
+
 class FakeSession:
     async def close(self) -> None:
         return None

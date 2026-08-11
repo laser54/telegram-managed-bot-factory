@@ -1,12 +1,15 @@
 import json
 from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
 
 from telegram_bot_factory import __version__
 from telegram_bot_factory.cli import main
 
 
 def test_package_version() -> None:
-    assert __version__ == "0.1.2"
+    assert __version__ == "0.1.3"
 
 
 def test_release_metadata_matches_package_version() -> None:
@@ -15,14 +18,53 @@ def test_release_metadata_matches_package_version() -> None:
 
     assert server["version"] == __version__
     assert server["packages"][0]["version"] == __version__
-    assert f"## [{__version__}] - 2026-08-09" in (root / "CHANGELOG.md").read_text(
+    assert f"## [{__version__}] - 2026-08-11" in (root / "CHANGELOG.md").read_text(
         encoding="utf-8"
     )
     readme = (root / "README.md").read_text(encoding="utf-8")
-    assert f"Public alpha `{__version__}` is published on" in readme
+    assert f"Version `{__version__}` adds secure Hermes Desktop first-run onboarding." in readme
     assert f"telegram-managed-bot-factory=={__version__}" in readme
     assert f"unreleased `{__version__}`" not in readme
 
 
 def test_cli_help(capsys: object) -> None:
     assert main([]) == 0
+
+
+def test_cli_exposes_local_onboarding_command(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exit_result:
+        main(["onboard", "--help"])
+    assert exit_result.value.code == 0
+    assert "systemd" in capsys.readouterr().out.casefold()
+
+
+def test_cli_reports_setup_failure_without_traceback(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from telegram_bot_factory.setup import SetupError
+
+    monkeypatch.setattr(
+        "telegram_bot_factory.cli.setup_main",
+        Mock(side_effect=SetupError("interactive terminal required")),
+    )
+
+    assert main(["setup"]) == 1
+    output = capsys.readouterr().out
+    assert "interactive terminal required" in output
+    assert "Traceback" not in output
+
+
+def test_cli_reports_installer_failure_without_traceback(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from telegram_bot_factory.installer import InstallError
+
+    monkeypatch.setattr(
+        "telegram_bot_factory.cli.install_for_hermes",
+        Mock(side_effect=InstallError("systemd --user is unavailable.")),
+    )
+
+    assert main(["install-hermes"]) == 1
+    output = capsys.readouterr().out
+    assert "systemd --user is unavailable" in output
+    assert "Traceback" not in output

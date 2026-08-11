@@ -14,6 +14,66 @@ class SystemdInstallError(RuntimeError):
     """Safe service installation failure."""
 
 
+SERVICE_NAME = "bot-factory-manager.service"
+
+
+def _required_systemctl() -> str:
+    systemctl = shutil.which("systemctl")
+    if systemctl is None:
+        raise SystemdInstallError("systemctl is unavailable.")
+    return systemctl
+
+
+def ensure_user_systemd_available() -> None:
+    """Fail before secret setup when the required user service manager is unavailable."""
+    systemctl = _required_systemctl()
+    try:
+        subprocess.run(  # noqa: S603 - resolved trusted systemctl executable
+            [systemctl, "--user", "show-environment"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise SystemdInstallError(
+            "systemd --user is unavailable. Run 'systemctl --user show-environment' "
+            "in this local terminal, enable a user systemd session, and retry. No worker "
+            "was started."
+        ) from error
+
+
+def verify_user_service_active() -> None:
+    """Require the persistent worker to be active and enabled before onboarding succeeds."""
+    systemctl = _required_systemctl()
+    try:
+        subprocess.run(  # noqa: S603 - resolved trusted systemctl executable
+            [systemctl, "--user", "is-active", "--quiet", SERVICE_NAME],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(  # noqa: S603 - resolved trusted systemctl executable
+            [systemctl, "--user", "is-enabled", "--quiet", SERVICE_NAME],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise SystemdInstallError(
+            "The Factory worker service is not active and enabled. Inspect it locally with "
+            "'systemctl --user status bot-factory-manager.service'."
+        ) from error
+
+
+def user_service_is_ready() -> bool:
+    """Return whether the mandatory persistent worker unit is active and enabled."""
+    try:
+        verify_user_service_active()
+    except SystemdInstallError:
+        return False
+    return True
+
+
 def render_user_unit(manager_executable: Path, paths: FactoryPaths) -> str:
     if not manager_executable.is_absolute():
         raise SystemdInstallError("Manager executable must be absolute.")
@@ -60,7 +120,7 @@ def install_user_service(
         raise SystemdInstallError("The v0.1 worker service supports Linux only.")
     destination_dir = unit_dir or (Path.home() / ".config" / "systemd" / "user")
     destination_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
-    unit_path = destination_dir / "bot-factory-manager.service"
+    unit_path = destination_dir / SERVICE_NAME
     temporary = destination_dir / ".bot-factory-manager.pending"
     temporary.write_text(render_user_unit(manager_executable, paths), encoding="utf-8")
     temporary.chmod(0o600)
