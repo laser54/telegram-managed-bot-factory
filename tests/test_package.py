@@ -9,7 +9,7 @@ from telegram_bot_factory.cli import main
 
 
 def test_package_version() -> None:
-    assert __version__ == "0.2.1"
+    assert __version__ == "0.2.2"
 
 
 def test_release_metadata_matches_package_version() -> None:
@@ -22,8 +22,9 @@ def test_release_metadata_matches_package_version() -> None:
         encoding="utf-8"
     )
     readme = (root / "README.md").read_text(encoding="utf-8")
+    assert f"PyPI%20release-{__version__}" in readme
     assert f"Version `{__version__}` is terminal-only: no Desktop bootstrap exists." in readme
-    assert f"telegram-managed-bot-factory=={__version__}" in readme
+    assert f"uvx --refresh --from telegram-managed-bot-factory=={__version__}" in readme
     assert f"unreleased `{__version__}`" not in readme
 
 

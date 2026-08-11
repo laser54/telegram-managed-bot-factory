@@ -1,6 +1,6 @@
 # Telegram Managed Bot Factory
 
-[![PyPI version](https://img.shields.io/pypi/v/telegram-managed-bot-factory.svg)](https://pypi.org/project/telegram-managed-bot-factory/)
+[![PyPI release 0.2.2](https://img.shields.io/badge/PyPI%20release-0.2.2-blue.svg)](https://pypi.org/project/telegram-managed-bot-factory/0.2.2/)
 
 <!-- mcp-name: io.github.laser54/bot-factory -->
 
@@ -9,7 +9,7 @@ into isolated, useful child bots. Ask Hermes for a supported bot, confirm that
 specific creation in Telegram, and the persistent Factory worker retrieves and
 contains the child credential without exposing it to the model or MCP.
 
-Version `0.2.1` is terminal-only: no Desktop bootstrap exists.
+Version `0.2.2` is terminal-only: no Desktop bootstrap exists.
 Each PyPI version is immutable; install the pinned release below.
 
 ## Why this matters
@@ -26,11 +26,11 @@ Requires Linux with `systemd --user`, Python 3.11–3.14, [uv](https://docs.astr
 Hermes 0.18, and a separate Telegram bot with Bot Management Mode enabled.
 
 ```bash
-uvx --from telegram-managed-bot-factory==0.2.1 bot-factory install-hermes
+uvx --refresh --from telegram-managed-bot-factory==0.2.2 bot-factory install-hermes
 ```
 
-The local installer first verifies that `systemd --user` is usable, then securely
-prompts once for the manager credential, enrolls the owner, installs and verifies
+The local installer first verifies `systemd --user` and enables verified user
+lingering so the worker survives SSH logout, then securely prompts once for the manager credential, enrolls the owner, installs and verifies
 the persistent user service and a fresh worker heartbeat, registers the six-tool
 stdio server with Hermes, and verifies discovery. It creates no child bot.
 
@@ -41,11 +41,11 @@ Linux host that will run the worker. It performs the complete setup in that term
 
 1. install the exact Factory version as a persistent `uv tool` (the worker unit
    never points at an evictable `uvx` cache);
-2. verify `systemd --user` **before** requesting any credential;
+2. verify `systemd --user` and enable verified user lingering **before** requesting any credential;
 3. accept the manager token only through hidden terminal input;
 4. enroll the owner, install the service, require it to be active, and observe a
    fresh worker heartbeat;
-5. register and verify the six-tool stdio server with Hermes.
+5. register and verify the six-tool stdio server with Hermes; any Hermes confirmation stays visible in this terminal.
 
 There is no GUI launcher and no unconfigured MCP bootstrap tool. Until this command
 completes, Factory MCP deliberately refuses to start. The token must never be pasted

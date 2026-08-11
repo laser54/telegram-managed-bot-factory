@@ -45,9 +45,9 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 
 - [x] `bot-factory install-hermes` completes user-level installation without editing Hermes YAML in the happy path.
 - [x] Terminal-only installation never requests a token in chat and has no Desktop launcher or MCP setup tool.
-- [x] The one-command terminal installer installs a pinned persistent `uv tool`, verifies `systemd --user` before hidden credential input, and requires the worker service to be active with a fresh heartbeat.
+- [x] The one-command terminal installer installs a pinned persistent `uv tool`, verifies `systemd --user` and enables verified user lingering before hidden credential input, and requires the worker service to be active with a fresh heartbeat.
 - [x] Installer rejects a textual Hermes connection failure even when the Hermes CLI exits with status zero.
-- [x] Hermes registration uses the direct `mcp add NAME --command PATH` argument contract without stdin injection, config mutation in tests, or network access.
+- [x] Hermes registration uses the direct `mcp add NAME --command PATH` argument contract without stdin injection; required host confirmations remain visible in the operator terminal.
 - [x] Setup checks manager identity, management mode, owner policy, secret store, and worker readiness before start.
 - [x] Setup and Hermes installation create zero child bots; a test child requires a separate explicit request and Telegram confirmation.
 - [x] The generated hardened user unit starts under WSL2 `systemd --user` without a `218/CAPABILITIES` failure.
