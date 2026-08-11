@@ -12,6 +12,14 @@ contains the child credential without exposing it to the model or MCP.
 Version `0.1.3` adds secure Hermes Desktop first-run onboarding.
 Each PyPI version is immutable; install the pinned release below.
 
+## Why this matters
+
+Creating a bot manually involves a valuable credential and a real external side effect. Factory makes that workflow explicit: an agent can prepare a bounded request, but the owner approves creation in Telegram and the persistent worker receives the resulting credential outside the agent context.
+
+## What I built
+
+I designed the MCP/control-plane boundary, the durable worker lifecycle, credential isolation, request state and reconciliation rules, then packaged and released the tool for self-hosted use. The design deliberately does **not** claim exactly-once external effects: a crash-ambiguous result is surfaced for reconciliation instead of being blindly retried.
+
 ## Install
 
 Requires Linux with `systemd --user`, Python 3.11–3.14, [uv](https://docs.astral.sh/uv/),
