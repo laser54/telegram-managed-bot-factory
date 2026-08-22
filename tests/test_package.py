@@ -9,7 +9,7 @@ from telegram_bot_factory.cli import main
 
 
 def test_package_version() -> None:
-    assert __version__ == "0.2.2"
+    assert __version__ == "0.2.3"
 
 
 def test_release_metadata_matches_package_version() -> None:
@@ -18,7 +18,7 @@ def test_release_metadata_matches_package_version() -> None:
 
     assert server["version"] == __version__
     assert server["packages"][0]["version"] == __version__
-    assert f"## [{__version__}] - 2026-08-11" in (root / "CHANGELOG.md").read_text(
+    assert f"## [{__version__}] - 2026-08-22" in (root / "CHANGELOG.md").read_text(
         encoding="utf-8"
     )
     readme = (root / "README.md").read_text(encoding="utf-8")

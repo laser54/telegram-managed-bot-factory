@@ -132,7 +132,7 @@ Server name, README marker, PyPI identifier и release versions должны с�
 Для пользователя Hermes основной happy-path начинается одной командой:
 
 ```bash
-uvx --refresh --from telegram-managed-bot-factory==0.2.2 bot-factory install-hermes
+uvx --refresh --from telegram-managed-bot-factory==0.2.3 bot-factory install-hermes
 ```
 
 Команда должна работать без `sudo` и без ручного редактирования YAML. Она:

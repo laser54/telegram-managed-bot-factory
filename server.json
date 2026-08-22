@@ -7,12 +7,12 @@
     "url": "https://github.com/laser54/telegram-managed-bot-factory",
     "source": "github"
   },
-  "version": "0.2.2",
+  "version": "0.2.3",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "telegram-managed-bot-factory",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "transport": {
         "type": "stdio"
       }

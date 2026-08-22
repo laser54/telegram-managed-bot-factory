@@ -4,6 +4,8 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-08-22
+
 ### Added
 
 - Add a strict non-secret Hermes function catalog and durable versioned child bindings.
