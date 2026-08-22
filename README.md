@@ -31,7 +31,7 @@ uvx --refresh --from telegram-managed-bot-factory==0.2.2 bot-factory install-her
 
 The local installer first verifies `systemd --user` and enables verified user
 lingering so the worker survives SSH logout, then securely prompts once for the manager credential, enrolls the owner, installs and verifies
-the persistent user service and a fresh worker heartbeat, registers the six-tool
+the persistent user service and a fresh worker heartbeat, registers the nine-tool
 stdio server with Hermes, and verifies discovery. It creates no child bot.
 
 ### Terminal-only first run
@@ -45,7 +45,7 @@ Linux host that will run the worker. It performs the complete setup in that term
 3. accept the manager token only through hidden terminal input;
 4. enroll the owner, install the service, require it to be active, and observe a
    fresh worker heartbeat;
-5. register and verify the six-tool stdio server with Hermes; any Hermes confirmation stays visible in this terminal.
+5. register and verify the nine-tool stdio server with Hermes; any Hermes confirmation stays visible in this terminal.
 
 There is no GUI launcher and no unconfigured MCP bootstrap tool. Until this command
 completes, Factory MCP deliberately refuses to start. The token must never be pasted
@@ -69,6 +69,12 @@ polls the manager bot and retrieves credentials. Each child receives only its
 own credential and uses instance-local state.
 
 ## Useful profiles
+
+The same four built-in profiles are exposed as a strict Hermes function catalog.
+After Telegram confirms and provisions a child, use `factory_list_functions`, then
+`factory_attach_function` with the existing child slug and `confirm=true`. Repeating
+the same attach is a no-op; rebinding keeps the bot username and Telegram identity.
+Pause and resume continue to use the existing stop/start tools.
 
 | Profile | Use it for |
 |---|---|

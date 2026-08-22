@@ -19,7 +19,7 @@ class InstallError(RuntimeError):
 
 
 def _hermes_test_verified(output: str) -> bool:
-    return "Connection failed" not in output and "Tools discovered: 6" in output
+    return "Connection failed" not in output and "Tools discovered: 9" in output
 
 
 def _required_command(name: str) -> str:
@@ -69,8 +69,8 @@ def install_for_hermes(paths: FactoryPaths | None = None) -> None:
         )
         test_output = test_result.stdout + test_result.stderr
         if not _hermes_test_verified(test_output):
-            raise InstallError("Hermes could not verify the six-tool Factory catalog.")
-        print("Hermes registration verified with six Factory tools.")
+            raise InstallError("Hermes could not verify the nine-tool Factory catalog.")
+        print("Hermes registration verified with nine Factory tools.")
     except (OnboardingError, SetupError, SystemdInstallError) as error:
         raise InstallError(str(error)) from error
     except (OSError, subprocess.CalledProcessError) as error:

@@ -25,11 +25,18 @@
                                                             └─────────────────────────┘
 ```
 
+The non-secret `BotBinding` relation maps one existing child slug to one stable
+Hermes function catalog ID, profile, version, and routing namespace. MCP only
+records binding intent. The persistent manager worker applies a pending binding
+by updating the existing instance manifest and restarting that child when it was
+active; it neither retrieves another token nor starts another Telegram consumer.
+
 ## Responsibility table
 
 | Component | May do | Must never do |
 |---|---|---|
 | MCP control plane | validate non-secret intent, create request record, return status/inventory | receive a token, retain Telegram update payloads, run unbounded worker loops |
+| Function catalog/binding | resolve stable IDs to built-in profiles and persist safe desired/status state | accept arbitrary prompts, tools, executable paths, or credentials |
 | Manager worker | poll manager updates, match requests, retrieve child credential, materialize runtime | expose credential through status/errors, run arbitrary commands from MCP input |
 | SecretStore | write/read secret by trusted internal reference | list secret contents to MCP or persist secret in SQLite/manifests |
 | Instance launcher | start a known profile with a child-local environment | inherit manager/Hermes/Bitwarden credential or accept arbitrary executable/path |

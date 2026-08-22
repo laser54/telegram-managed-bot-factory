@@ -9,11 +9,15 @@ from uuid import UUID
 from pydantic import Field
 
 from telegram_bot_factory.config import FactoryConfig
+from telegram_bot_factory.function_catalog import HermesFunction, list_functions, resolve_function
 from telegram_bot_factory.models import (
+    BindingStatus,
+    BotBinding,
     BotUsername,
     CreateRequest,
     DisplayName,
     FactoryRequest,
+    FunctionId,
     ProfileConfig,
     ProfileName,
     RequestState,
@@ -60,9 +64,7 @@ class InstanceSummary(StrictModel):
     username: BotUsername
     profile: ProfileName
     lifecycle: RequestState
-    health: Literal[
-        "unknown", "healthy", "stopped", "failed", "reconciliation_required"
-    ]
+    health: Literal["unknown", "healthy", "stopped", "failed", "reconciliation_required"]
     last_verified_at: datetime
 
 
@@ -76,6 +78,25 @@ class RuntimeActionResult(StrictModel):
     action: Literal["start", "stop"]
     state: RequestState
     next_action: Literal["wait"] = "wait"
+
+
+class FunctionCatalogResult(StrictModel):
+    functions: list[HermesFunction]
+
+
+class BindingResult(StrictModel):
+    binding_id: UUID
+    slug: Slug
+    username: BotUsername
+    function_id: FunctionId
+    function_name: str
+    function_summary: str
+    status: BindingStatus
+    version: int = Field(ge=1)
+    routing_namespace: str
+    last_safe_error: str | None = None
+    next_action: Literal["wait", "use_bot", "resume", "retry", "none"]
+    updated_at: datetime
 
 
 class FactoryService:
@@ -95,9 +116,7 @@ class FactoryService:
             seconds=60
         )
         ready = (
-            self._config.can_manage_bots
-            and worker_healthy
-            and self._secrets.manager_configured()
+            self._config.can_manage_bots and worker_healthy and self._secrets.manager_configured()
         )
         return PreflightResult(
             ready=ready,
@@ -193,6 +212,36 @@ class FactoryService:
             ]
         )
 
+    def list_functions(self) -> FunctionCatalogResult:
+        return FunctionCatalogResult(functions=list_functions())
+
+    def get_binding(self, slug: Slug) -> BindingResult:
+        instance = self._state.get_instance(str(slug))
+        if instance is None:
+            raise FactoryServiceError("Instance does not exist.")
+        binding = self._state.get_binding(str(slug))
+        if binding is None:
+            raise FactoryServiceError("Bot has no Hermes function binding.")
+        return self._binding_result(binding, instance.username)
+
+    def attach_function(self, slug: Slug, function_id: FunctionId, confirm: bool) -> BindingResult:
+        if not confirm:
+            raise FactoryServiceError("Explicit confirmation is required.")
+        resolved = resolve_function(function_id)
+        if resolved is None:
+            raise FactoryServiceError("Hermes function does not exist.")
+        function, _ = resolved
+        instance = self._state.get_instance(str(slug))
+        if instance is None:
+            raise FactoryServiceError("Instance does not exist.")
+        if instance.state not in {RequestState.ACTIVE, RequestState.STOPPED}:
+            raise FactoryServiceError("Instance is not in a bindable lifecycle state.")
+        try:
+            binding = self._state.attach_binding(str(slug), function_id, function.profile)
+        except StateError as error:
+            raise FactoryServiceError(str(error)) from error
+        return self._binding_result(binding, instance.username)
+
     def request_runtime_action(
         self, slug: Slug, action: Literal["start", "stop"], confirm: bool
     ) -> RuntimeActionResult:
@@ -258,4 +307,36 @@ class FactoryService:
             state=request.state,
             status="No automatic action is pending.",
             next_action="none",
+        )
+
+    @staticmethod
+    def _binding_result(binding: BotBinding, username: BotUsername) -> BindingResult:
+        resolved = resolve_function(binding.function_id)
+        if resolved is None:
+            raise FactoryServiceError("Binding references an unavailable Hermes function.")
+        function, _ = resolved
+        next_action: Literal["wait", "use_bot", "resume", "retry", "none"]
+        if binding.status is BindingStatus.PENDING:
+            next_action = "wait"
+        elif binding.status is BindingStatus.ACTIVE:
+            next_action = "use_bot"
+        elif binding.status is BindingStatus.PAUSED:
+            next_action = "resume"
+        elif binding.status is BindingStatus.FAILED:
+            next_action = "retry"
+        else:  # pragma: no cover - exhaustive enum guard
+            next_action = "none"
+        return BindingResult(
+            binding_id=binding.binding_id,
+            slug=binding.slug,
+            username=username,
+            function_id=function.function_id,
+            function_name=function.name,
+            function_summary=function.summary,
+            status=binding.status,
+            version=binding.version,
+            routing_namespace=binding.routing_namespace,
+            last_safe_error=binding.safe_error,
+            next_action=next_action,
+            updated_at=binding.updated_at,
         )

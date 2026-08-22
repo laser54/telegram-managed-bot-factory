@@ -23,6 +23,9 @@ Slug = Annotated[
     str,
     StringConstraints(min_length=3, max_length=64, pattern=r"^[a-z][a-z0-9_]{2,63}$"),
 ]
+FunctionId = Annotated[
+    str, StringConstraints(min_length=3, max_length=64, pattern=r"^[a-z][a-z0-9_]{2,63}$")
+]
 
 
 def utc_now() -> datetime:
@@ -129,9 +132,9 @@ class InstanceRecord(StrictModel):
     profile: ProfileName
     owner_telegram_id: Annotated[int, Field(gt=0)]
     state: RequestState
-    health: Literal[
-        "unknown", "healthy", "stopped", "failed", "reconciliation_required"
-    ] = "unknown"
+    health: Literal["unknown", "healthy", "stopped", "failed", "reconciliation_required"] = (
+        "unknown"
+    )
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 
@@ -140,3 +143,31 @@ class RuntimeCommand(StrictModel):
     command_id: int = Field(gt=0)
     slug: Slug
     action: Literal["start", "stop"]
+
+
+class BindingStatus(StrEnum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    PAUSED = "paused"
+    FAILED = "failed"
+
+
+class BotBinding(StrictModel):
+    binding_id: UUID = Field(default_factory=uuid4)
+    slug: Slug
+    function_id: FunctionId
+    profile: ProfileName
+    status: BindingStatus = BindingStatus.PENDING
+    version: int = Field(default=1, ge=1)
+    routing_namespace: Annotated[str, StringConstraints(min_length=5, max_length=80)]
+    safe_error: Annotated[str | None, StringConstraints(max_length=100)] = None
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
+
+
+class BindingCommand(StrictModel):
+    command_id: int = Field(gt=0)
+    binding_id: UUID
+    slug: Slug
+    function_id: FunctionId
+    version: int = Field(ge=1)

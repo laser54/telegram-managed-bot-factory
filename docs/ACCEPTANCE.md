@@ -22,7 +22,8 @@ A checkbox means **evidence exists**: automated output, a safe live result, or a
 
 ## C. MCP product contract
 
-- [x] Safe configured allowlist is exactly `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, and `factory_stop_instance`.
+- [x] Safe configured allowlist contains the six lifecycle tools plus `factory_list_functions`, `factory_get_binding`, and `factory_attach_function`.
+- [x] Function manifests and binding schemas are strict and non-secret; attach/rebind is durable and idempotent, preserves child identity, and is applied only by the existing worker/runtime boundary.
 - [x] Before terminal enrollment exists, Factory MCP fails closed with a safe instruction to complete or repair setup from an interactive terminal on its Linux host; it exposes no bootstrap tool.
 - [x] Tool input/output uses strict Pydantic/JSON Schema 2020-12 models and returns structured safe status.
 - [x] Creation returns durable explicit `request_id`; `factory_get_request` works after an MCP client/process restart.

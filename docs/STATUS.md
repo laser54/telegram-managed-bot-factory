@@ -6,7 +6,7 @@ Unreleased `0.1.1` is being prepared in the repository. It does not modify the
 already-published, immutable PyPI `0.1.0` metadata.
 
 - The Telegram Managed Bots live spike passed on 2026-08-08 with redacted evidence.
-- Typed package, SQLite state machine, local secret store, persistent worker, isolated runtime, four built-in profiles, six-tool MCP server, setup, systemd unit, and Hermes installer are implemented.
+- Typed package, SQLite state machine, local secret store, persistent worker, isolated runtime, four built-in profiles, nine-tool MCP server, setup, systemd unit, and Hermes installer are implemented.
 - Windows development suite: 54 passed and one OS-specific symlink test skipped.
 - Ubuntu/WSL2 suite: 55 passed, including POSIX permissions and symlink rejection.
 - Hermes 0.18 legacy stdio acceptance discovered exactly six tools.

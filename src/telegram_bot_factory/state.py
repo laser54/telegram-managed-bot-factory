@@ -13,6 +13,9 @@ from uuid import UUID
 from pydantic import TypeAdapter
 
 from telegram_bot_factory.models import (
+    BindingCommand,
+    BindingStatus,
+    BotBinding,
     FactoryRequest,
     InstanceRecord,
     ProfileConfig,
@@ -44,9 +47,7 @@ ALLOWED_TRANSITIONS: dict[RequestState, frozenset[RequestState]] = {
     RequestState.INSTANCE_MATERIALIZED: frozenset(
         {RequestState.ACTIVE, RequestState.FAILED, RequestState.RECONCILIATION_REQUIRED}
     ),
-    RequestState.ACTIVE: frozenset(
-        {RequestState.STOPPED, RequestState.RECONCILIATION_REQUIRED}
-    ),
+    RequestState.ACTIVE: frozenset({RequestState.STOPPED, RequestState.RECONCILIATION_REQUIRED}),
     RequestState.STOPPED: frozenset({RequestState.ACTIVE, RequestState.RETIRED}),
     RequestState.FAILED: frozenset(),
     RequestState.RECONCILIATION_REQUIRED: frozenset(),
@@ -138,6 +139,30 @@ class FactoryState:
                     expires_at TEXT NOT NULL,
                     consumed_at TEXT
                 );
+                CREATE TABLE IF NOT EXISTS bot_bindings (
+                    binding_id TEXT PRIMARY KEY,
+                    slug TEXT NOT NULL UNIQUE REFERENCES instances(slug),
+                    function_id TEXT NOT NULL,
+                    profile TEXT NOT NULL,
+                    status TEXT NOT NULL CHECK(status IN ('pending', 'active', 'paused', 'failed')),
+                    version INTEGER NOT NULL CHECK(version > 0),
+                    routing_namespace TEXT NOT NULL UNIQUE,
+                    safe_error TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS binding_commands (
+                    command_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    binding_id TEXT NOT NULL REFERENCES bot_bindings(binding_id),
+                    slug TEXT NOT NULL REFERENCES instances(slug),
+                    function_id TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    status TEXT NOT NULL CHECK(status IN ('pending', 'complete', 'failed')),
+                    requested_at TEXT NOT NULL,
+                    completed_at TEXT
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS one_pending_binding_command
+                    ON binding_commands(slug) WHERE status = 'pending';
                 """
             )
         self.database_path.chmod(0o600)
@@ -481,6 +506,7 @@ class FactoryState:
                         state, health, created_at, updated_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(slug) DO UPDATE SET
+                        profile = excluded.profile,
                         state = excluded.state,
                         health = excluded.health,
                         updated_at = excluded.updated_at
@@ -503,9 +529,7 @@ class FactoryState:
     def get_instance(self, slug: str) -> InstanceRecord | None:
         self.initialize()
         with self._connection() as connection:
-            row = connection.execute(
-                "SELECT * FROM instances WHERE slug = ?", (slug,)
-            ).fetchone()
+            row = connection.execute("SELECT * FROM instances WHERE slug = ?", (slug,)).fetchone()
         return None if row is None else self._instance_from_row(row)
 
     def list_instances(self) -> list[InstanceRecord]:
@@ -515,6 +539,158 @@ class FactoryState:
                 "SELECT * FROM instances ORDER BY created_at, slug"
             ).fetchall()
         return [self._instance_from_row(row) for row in rows]
+
+    def attach_binding(self, slug: str, function_id: str, profile: ProfileName) -> BotBinding:
+        """Create or rebind atomically; identical intent is a durable no-op."""
+        self.initialize()
+        now = datetime.now(UTC)
+        with self._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            if (
+                connection.execute("SELECT 1 FROM instances WHERE slug = ?", (slug,)).fetchone()
+                is None
+            ):
+                raise StateError("Instance does not exist.")
+            row = connection.execute(
+                "SELECT * FROM bot_bindings WHERE slug = ?", (slug,)
+            ).fetchone()
+            if row is not None and row["function_id"] == function_id and row["status"] != "failed":
+                return self._binding_from_row(row)
+            if (
+                connection.execute(
+                    "SELECT 1 FROM binding_commands WHERE slug = ? AND status = 'pending'", (slug,)
+                ).fetchone()
+                is not None
+            ):
+                raise StateError("A binding change is already pending.")
+            if row is None:
+                binding = BotBinding(
+                    slug=slug,
+                    function_id=function_id,
+                    profile=profile,
+                    routing_namespace=f"bot:{slug}",
+                )
+                connection.execute(
+                    """INSERT INTO bot_bindings VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)""",
+                    (
+                        str(binding.binding_id),
+                        slug,
+                        function_id,
+                        profile.value,
+                        binding.status.value,
+                        binding.version,
+                        binding.routing_namespace,
+                        binding.created_at.isoformat(),
+                        binding.updated_at.isoformat(),
+                    ),
+                )
+            else:
+                binding = self._binding_from_row(row).model_copy(
+                    update={
+                        "function_id": function_id,
+                        "profile": profile,
+                        "status": BindingStatus.PENDING,
+                        "version": int(row["version"]) + 1,
+                        "safe_error": None,
+                        "updated_at": now,
+                    }
+                )
+                connection.execute(
+                    """UPDATE bot_bindings SET function_id = ?, profile = ?, status = 'pending',
+                    version = ?, safe_error = NULL, updated_at = ? WHERE binding_id = ?""",
+                    (
+                        function_id,
+                        profile.value,
+                        binding.version,
+                        now.isoformat(),
+                        str(binding.binding_id),
+                    ),
+                )
+            connection.execute(
+                """INSERT INTO binding_commands
+                (binding_id, slug, function_id, version, status, requested_at)
+                VALUES (?, ?, ?, ?, 'pending', ?)""",
+                (str(binding.binding_id), slug, function_id, binding.version, now.isoformat()),
+            )
+        return binding
+
+    def get_binding(self, slug: str) -> BotBinding | None:
+        self.initialize()
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT * FROM bot_bindings WHERE slug = ?", (slug,)
+            ).fetchone()
+        return None if row is None else self._binding_from_row(row)
+
+    def pending_binding_commands(self) -> list[BindingCommand]:
+        self.initialize()
+        with self._connection() as connection:
+            rows = connection.execute(
+                "SELECT command_id, binding_id, slug, function_id, version FROM binding_commands "
+                "WHERE status = 'pending' ORDER BY command_id"
+            ).fetchall()
+        return [
+            BindingCommand(
+                command_id=row["command_id"],
+                binding_id=UUID(row["binding_id"]),
+                slug=row["slug"],
+                function_id=row["function_id"],
+                version=row["version"],
+            )
+            for row in rows
+        ]
+
+    def complete_binding_command(
+        self,
+        command_id: int,
+        binding_id: UUID,
+        version: int,
+        *,
+        succeeded: bool,
+        paused: bool = False,
+    ) -> None:
+        self.initialize()
+        now = datetime.now(UTC).isoformat()
+        command_status = "complete" if succeeded else "failed"
+        binding_status = "paused" if succeeded and paused else "active" if succeeded else "failed"
+        safe_error = None if succeeded else "runtime_rebind_failed"
+        with self._connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            cursor = connection.execute(
+                "UPDATE binding_commands SET status = ?, completed_at = ? "
+                "WHERE command_id = ? AND status = 'pending'",
+                (command_status, now, command_id),
+            )
+            if cursor.rowcount != 1:
+                raise StateError("Binding command is no longer pending.")
+            connection.execute(
+                "UPDATE bot_bindings SET status = ?, safe_error = ?, updated_at = ? "
+                "WHERE binding_id = ? AND version = ?",
+                (binding_status, safe_error, now, str(binding_id), version),
+            )
+
+    def set_binding_paused(self, slug: str, *, paused: bool) -> None:
+        self.initialize()
+        with self._connection() as connection:
+            connection.execute(
+                "UPDATE bot_bindings SET status = ?, updated_at = ? WHERE slug = ?",
+                ("paused" if paused else "active", datetime.now(UTC).isoformat(), slug),
+            )
+
+    @staticmethod
+    def _binding_from_row(row: sqlite3.Row) -> BotBinding:
+        return BotBinding(
+            binding_id=UUID(row["binding_id"]),
+            slug=row["slug"],
+            function_id=row["function_id"],
+            profile=ProfileName(row["profile"]),
+            status=BindingStatus(row["status"]),
+            version=row["version"],
+            routing_namespace=row["routing_namespace"],
+            safe_error=row["safe_error"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

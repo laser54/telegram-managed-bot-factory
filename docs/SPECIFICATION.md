@@ -142,7 +142,7 @@ uvx --refresh --from telegram-managed-bot-factory==0.2.2 bot-factory install-her
 3. Открывает setup wizard. Он передаёт manager token только через local hidden `getpass` prompt — **не** через Hermes, MCP tool, command-line argument или config file.
 4. Проверяет `getMe`/`can_manage_bots` и owner allowlist.
 5. Устанавливает hardened `systemd --user` unit, запускает manager worker и требует active state.
-6. Регистрирует безопасный stdio MCP command в Hermes с configured allowlist только `factory_preflight`, `factory_create_request`, `factory_get_request`, `factory_list_instances`, `factory_start_instance`, `factory_stop_instance`; обязательное подтверждение Hermes остаётся видимым в текущем терминале.
+6. Регистрирует безопасный stdio MCP command в Hermes с configured allowlist из lifecycle tools и трёх binding tools: `factory_list_functions`, `factory_get_binding`, `factory_attach_function`; обязательное подтверждение Hermes остаётся видимым в текущем терминале.
 7. Выполняет `hermes mcp test bot-factory` and returns a human-readable success/failure result without tokens.
 
 Установка и setup создают **ноль child bots**. Test/demo child не создаётся
@@ -153,7 +153,7 @@ uvx --refresh --from telegram-managed-bot-factory==0.2.2 bot-factory install-her
 
 Exit status Hermes недостаточен для этого шага: Hermes 0.18 может вернуть zero
 после textual connection failure. Installer считает регистрацию успешной только
-после явного результата `Tools discovered: 6`; raw CLI output не становится
+после явного результата `Tools discovered: 9`; raw CLI output не становится
 Factory status payload.
 
 One-line install не означает zero-consent: после него пользователь всё равно самостоятельно включает Bot Management Mode в BotFather и один раз скрыто вводит manager token. Это единственные неизбежные security actions; остальное должно быть автоматическим.
@@ -437,6 +437,22 @@ Owner определяется только из локального enrollment
 ### `factory_start_instance` и `factory_stop_instance`
 
 Требуют `confirm=true`, owner allowlist и существующий slug. Не принимают произвольные paths/команды. Destructive/revoke/remove tools не включать в default MCP allowlist.
+
+### Hermes function bindings
+
+- `factory_list_functions` возвращает стабильный strict catalog: function ID, name,
+  summary, manifest version и существующий allowlisted profile.
+- `factory_get_binding(slug)` возвращает binding ID, bot/slug, function metadata,
+  status/version, routing namespace, safe error и следующий шаг.
+- `factory_attach_function(slug, function_id, confirm=true)` создаёт или меняет
+  durable non-secret binding. Одинаковый повтор является no-op; rebind сохраняет
+  Telegram identity и child secret и выполняется persistent worker-ом через
+  существующий runtime/profile boundary.
+- Pause/resume выполняются существующими stop/start tools и отражаются как
+  `paused`/`active` binding status. Detach не exposed, пока нет безопасного
+  lifecycle для child без profile.
+- Catalog не принимает user prompts, tools, paths или arbitrary config. Binding
+  никогда не содержит credential, secret path, raw Telegram update или prompt.
 
 ### MCP 2026-07-28: progressive-modern strategy
 

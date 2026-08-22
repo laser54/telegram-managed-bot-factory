@@ -118,3 +118,44 @@ def test_control_plane_surfaces_child_reconciliation_after_restart(tmp_path: Pat
     assert fetched.next_action == "reconcile"
     assert listed[0].lifecycle is RequestState.RECONCILIATION_REQUIRED
     assert listed[0].health == "reconciliation_required"
+
+
+def test_attach_function_requires_confirmation_and_is_safe_idempotent(tmp_path: Path) -> None:
+    service = ready_service(tmp_path)
+    created = service.create_request(
+        "Owner Echo", "owner_echo_bot", "owner_echo", OwnerEchoConfig(), 42
+    )
+    for target in (
+        RequestState.MANAGED_UPDATE_RECEIVED,
+        RequestState.TOKEN_RECEIVED,
+        RequestState.INSTANCE_MATERIALIZED,
+        RequestState.ACTIVE,
+    ):
+        service._state.transition(created.request_id, target)
+    request = service._state.get_request(created.request_id)
+    assert request is not None
+    service._state.upsert_instance(
+        InstanceRecord(
+            slug=request.slug,
+            request_id=request.request_id,
+            username=request.username,
+            profile=request.profile,
+            owner_telegram_id=request.owner_telegram_id,
+            state=RequestState.ACTIVE,
+            health="healthy",
+        )
+    )
+
+    with pytest.raises(FactoryServiceError, match="confirmation"):
+        service.attach_function(request.slug, "link_inbox", False)
+    with pytest.raises(FactoryServiceError, match="does not exist"):
+        service.attach_function(request.slug, "unknown", True)
+    first = service.attach_function(request.slug, "link_inbox", True)
+    repeated = service.attach_function(request.slug, "link_inbox", True)
+
+    assert repeated.binding_id == first.binding_id
+    assert repeated.version == 1
+    assert repeated.status.value == "pending"
+    serialized = repeated.model_dump_json().casefold()
+    assert "token" not in serialized
+    assert "secret" not in serialized

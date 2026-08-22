@@ -11,10 +11,10 @@ from telegram_bot_factory.installer import (
 )
 
 
-def test_hermes_result_requires_exact_six_tool_success() -> None:
-    assert _hermes_test_verified("Connected\nTools discovered: 6") is True
+def test_hermes_result_requires_exact_nine_tool_success() -> None:
+    assert _hermes_test_verified("Connected\nTools discovered: 9") is True
     assert _hermes_test_verified("Connection failed\nTools discovered: 0") is False
-    assert _hermes_test_verified("Connected\nTools discovered: 5") is False
+    assert _hermes_test_verified("Connected\nTools discovered: 6") is False
 
 
 def test_hermes_add_keeps_required_interactive_confirmation_visible() -> None:

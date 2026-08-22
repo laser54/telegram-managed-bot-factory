@@ -21,6 +21,8 @@
 | No general AI child profile in v0.1 | Model secrets, costs, tools, and content policy need a separate security design. |
 | Child inbound effects use durable at-most-once attempts plus quarantine | An update is reserved before profile/storage/send effects. Completed collisions are skipped; an interrupted reservation is quarantined on replay because Telegram send success can be ambiguous. Exactly-once external effects are not claimed. |
 | Child reconciliation is promoted into durable Factory state | The instance-local effect ledger is authoritative; manager startup/runtime reconciliation makes the condition visible through request and instance MCP status and prevents restart from relaunching it as healthy. |
+| Hermes functions are versioned catalog aliases for built-in profiles | This keeps permissions and configuration inside the existing allowlist. MCP stores only binding intent; the persistent worker applies it to the existing child identity and runtime. |
+| Rebind is explicit and worker-mediated; detach is deferred | `confirm=true` is required. Identical requests are no-ops, rebind preserves the child identity, and pause/resume use existing lifecycle controls. There is no safe unconfigured-child lifecycle yet, so detach is not exposed. |
 | MIT planned | Maximizes public reuse; validate final licensing and dependency compatibility before release. |
 
 ## Must be proven, not assumed

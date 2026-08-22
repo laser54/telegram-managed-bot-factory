@@ -19,6 +19,9 @@ EXPECTED_TOOLS = [
     "factory_create_request",
     "factory_get_request",
     "factory_list_instances",
+    "factory_list_functions",
+    "factory_get_binding",
+    "factory_attach_function",
     "factory_start_instance",
     "factory_stop_instance",
 ]
@@ -113,9 +116,7 @@ async def test_modern_create_uses_sealed_single_use_mrtr_state(tmp_path: Path) -
         assert first.request_state is not None
         assert "telegram_confirmation" in (first.input_requests or {})
         response = {
-            "telegram_confirmation": ElicitResult(
-                action="accept", content={"acknowledged": True}
-            )
+            "telegram_confirmation": ElicitResult(action="accept", content={"acknowledged": True})
         }
         completed = await client.session.call_tool(
             "factory_create_request",
@@ -163,9 +164,7 @@ async def test_modern_create_rejects_tampered_sealed_state(tmp_path: Path) -> No
 @pytest.mark.asyncio
 async def test_modern_create_rejects_expired_sealed_state(tmp_path: Path) -> None:
     security = RequestStateSecurity(keys=[b"e" * 32], ttl=0.01)
-    server = create_mcp_server(
-        ready_service(tmp_path), request_state_security=security
-    )
+    server = create_mcp_server(ready_service(tmp_path), request_state_security=security)
     async with Client(server, mode="auto") as client:
         first = await client.session.call_tool(
             "factory_create_request", CREATE_ARGUMENTS, allow_input_required=True
@@ -189,12 +188,8 @@ async def test_modern_create_rejects_expired_sealed_state(tmp_path: Path) -> Non
 @pytest.mark.asyncio
 async def test_modern_create_binds_state_to_principal(tmp_path: Path) -> None:
     principal = ["owner-a"]
-    security = RequestStateSecurity(
-        keys=[b"p" * 32], bind_principal=lambda _: principal[0]
-    )
-    server = create_mcp_server(
-        ready_service(tmp_path), request_state_security=security
-    )
+    security = RequestStateSecurity(keys=[b"p" * 32], bind_principal=lambda _: principal[0])
+    server = create_mcp_server(ready_service(tmp_path), request_state_security=security)
     async with Client(server, mode="auto") as client:
         first = await client.session.call_tool(
             "factory_create_request", CREATE_ARGUMENTS, allow_input_required=True

@@ -2,6 +2,18 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- Add a strict non-secret Hermes function catalog and durable versioned child bindings.
+- Add MCP tools to list functions, read a binding, and idempotently attach or rebind a function.
+- Apply bindings through the existing persistent worker and isolated profile runtime without creating another Telegram consumer.
+
+### Fixed
+
+- Pin built distributions to broadly supported core metadata 2.4 so the release check remains compatible with the project toolchain.
+
 ## [0.2.2] - 2026-08-11
 
 ### Fixed

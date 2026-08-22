@@ -25,14 +25,17 @@ from telegram_bot_factory.config import read_factory_config
 from telegram_bot_factory.models import (
     BotUsername,
     DisplayName,
+    FunctionId,
     ProfileConfig,
     Slug,
 )
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.secrets import LocalFileSecretStore
 from telegram_bot_factory.service import (
+    BindingResult,
     FactoryService,
     FactoryServiceError,
+    FunctionCatalogResult,
     InstanceListResult,
     PreflightResult,
     RequestResult,
@@ -85,7 +88,6 @@ def create_mcp_server(
         version=__version__,
         request_state_security=request_state_security,
     )
-
 
     @server.tool(name="factory_preflight", structured_output=True)
     def factory_preflight() -> PreflightResult:
@@ -151,6 +153,23 @@ def create_mcp_server(
         """List safe non-secret instance inventory."""
         return service.list_instances()
 
+    @server.tool(name="factory_list_functions", structured_output=True)
+    def factory_list_functions() -> FunctionCatalogResult:
+        """List stable non-secret Hermes functions backed by allowlisted profiles."""
+        return service.list_functions()
+
+    @server.tool(name="factory_get_binding", structured_output=True)
+    def factory_get_binding(slug: Slug) -> BindingResult:
+        """Read the safe durable Hermes function binding for a child bot."""
+        return service.get_binding(slug)
+
+    @server.tool(name="factory_attach_function", structured_output=True)
+    def factory_attach_function(
+        slug: Slug, function_id: FunctionId, confirm: bool
+    ) -> BindingResult:
+        """Idempotently attach or rebind an allowlisted function to an existing child."""
+        return service.attach_function(slug, function_id, confirm)
+
     @server.tool(name="factory_start_instance", structured_output=True)
     def factory_start_instance(slug: Slug, confirm: bool) -> RuntimeActionResult:
         """Queue startup for a stopped known instance."""
@@ -182,9 +201,7 @@ def default_service() -> FactoryService:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bot-factory-mcp")
-    parser.add_argument(
-        "--transport", choices=("stdio", "streamable-http"), default="stdio"
-    )
+    parser.add_argument("--transport", choices=("stdio", "streamable-http"), default="stdio")
     return parser
 
 

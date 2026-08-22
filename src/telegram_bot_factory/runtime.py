@@ -127,6 +127,13 @@ class InstanceLauncher:
         self.start(manifest)
         return manifest
 
+    def rebind(self, slug: Slug, profile: ProfileName, profile_config: ProfileConfig) -> None:
+        """Replace only the allowlisted profile portion of an existing manifest."""
+        manifest_path = self._safe_child(self._paths.instance_dir, slug) / "manifest.json"
+        current = self.load_manifest(manifest_path)
+        updated = current.model_copy(update={"profile": profile, "profile_config": profile_config})
+        self._write_manifest(manifest_path, updated)
+
     def stop(self, slug: Slug, wait_seconds: float = 10) -> None:
         process = self._processes.get(str(slug))
         if process is None or process.poll() is not None:

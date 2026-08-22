@@ -1,4 +1,3 @@
-
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock
@@ -34,6 +33,7 @@ def test_onboarding_installs_and_verifies_worker_after_local_setup(
     monkeypatch.setattr(
         onboarding, "ensure_user_systemd_available", lambda: calls.append("preflight")
     )
+    monkeypatch.setattr(onboarding, "ensure_user_lingering", lambda: calls.append("linger"))
     monkeypatch.setattr(onboarding, "setup_main", lambda _paths: calls.append("setup"))
 
     def install(_manager: Path, _paths: FactoryPaths) -> Path:
@@ -41,9 +41,7 @@ def test_onboarding_installs_and_verifies_worker_after_local_setup(
         return tmp_path / "worker.service"
 
     monkeypatch.setattr(onboarding, "install_user_service", install)
-    monkeypatch.setattr(
-        onboarding, "verify_user_service_active", lambda: calls.append("verify")
-    )
+    monkeypatch.setattr(onboarding, "verify_user_service_active", lambda: calls.append("verify"))
     monkeypatch.setattr(
         onboarding,
         "verify_worker_heartbeat",
@@ -52,7 +50,7 @@ def test_onboarding_installs_and_verifies_worker_after_local_setup(
 
     onboarding.run_onboarding(manager, paths)
 
-    assert calls == ["preflight", "setup", "install", "verify", "heartbeat"]
+    assert calls == ["preflight", "linger", "setup", "install", "verify", "heartbeat"]
 
 
 def test_worker_heartbeat_verification_accepts_fresh_persistent_worker(tmp_path: Path) -> None:

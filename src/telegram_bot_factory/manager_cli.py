@@ -8,6 +8,7 @@ import signal
 from collections.abc import Sequence
 
 from telegram_bot_factory.config import read_factory_config
+from telegram_bot_factory.function_catalog import resolve_function
 from telegram_bot_factory.models import RequestState
 from telegram_bot_factory.paths import FactoryPaths
 from telegram_bot_factory.profile_store import ProfileStore
@@ -46,6 +47,7 @@ async def run_manager() -> None:
             except TelegramError:
                 await asyncio.sleep(1)
             process_runtime_commands(state, launcher, paths)
+            process_binding_commands(state, launcher, paths)
             reconcile_child_updates(state, paths)
     finally:
         launcher.shutdown()
@@ -68,19 +70,59 @@ def process_runtime_commands(
             if command.action == "stop":
                 launcher.stop(command.slug)
                 state.transition(request.request_id, RequestState.STOPPED)
-                state.update_instance_lifecycle(
-                    str(command.slug), RequestState.STOPPED, "stopped"
-                )
+                state.update_instance_lifecycle(str(command.slug), RequestState.STOPPED, "stopped")
+                state.set_binding_paused(str(command.slug), paused=True)
             else:
                 manifest_path = paths.instance_dir / str(command.slug) / "manifest.json"
                 launcher.start(launcher.load_manifest(manifest_path))
                 state.transition(request.request_id, RequestState.ACTIVE)
-                state.update_instance_lifecycle(
-                    str(command.slug), RequestState.ACTIVE, "healthy"
-                )
+                state.update_instance_lifecycle(str(command.slug), RequestState.ACTIVE, "healthy")
+                state.set_binding_paused(str(command.slug), paused=False)
             state.complete_runtime_command(command.command_id, succeeded=True)
         except (RuntimeProvisionError, StateError):
             state.complete_runtime_command(command.command_id, succeeded=False)
+
+
+def process_binding_commands(
+    state: FactoryState, launcher: InstanceLauncher, paths: FactoryPaths
+) -> None:
+    """Apply catalog bindings in the token-owning persistent worker."""
+    for command in state.pending_binding_commands():
+        instance = state.get_instance(str(command.slug))
+        resolved = resolve_function(command.function_id)
+        if instance is None or resolved is None:
+            state.complete_binding_command(
+                command.command_id, command.binding_id, command.version, succeeded=False
+            )
+            continue
+        _, profile_config = resolved
+        was_active = instance.state is RequestState.ACTIVE
+        stopped_for_rebind = False
+        try:
+            if was_active:
+                launcher.stop(command.slug)
+                stopped_for_rebind = True
+            launcher.rebind(command.slug, resolved[0].profile, profile_config)
+            if was_active:
+                manifest_path = paths.instance_dir / str(command.slug) / "manifest.json"
+                launcher.start(launcher.load_manifest(manifest_path))
+            state.upsert_instance(instance.model_copy(update={"profile": resolved[0].profile}))
+            state.complete_binding_command(
+                command.command_id,
+                command.binding_id,
+                command.version,
+                succeeded=True,
+                paused=not was_active,
+            )
+        except (RuntimeProvisionError, StateError):
+            if stopped_for_rebind:
+                request = state.get_request(instance.request_id)
+                if request is not None and request.state is RequestState.ACTIVE:
+                    state.transition(request.request_id, RequestState.STOPPED, "rebind_failed")
+                state.update_instance_lifecycle(str(command.slug), RequestState.STOPPED, "failed")
+            state.complete_binding_command(
+                command.command_id, command.binding_id, command.version, succeeded=False
+            )
 
 
 def recover_active_instances(
@@ -96,9 +138,7 @@ def recover_active_instances(
             request = state.get_request(instance.request_id)
             if request is not None and request.state is RequestState.ACTIVE:
                 state.transition(request.request_id, RequestState.STOPPED, "restart_failed")
-            state.update_instance_lifecycle(
-                str(instance.slug), RequestState.STOPPED, "failed"
-            )
+            state.update_instance_lifecycle(str(instance.slug), RequestState.STOPPED, "failed")
 
 
 def reconcile_child_updates(state: FactoryState, paths: FactoryPaths) -> None:
@@ -119,6 +159,7 @@ def reconcile_child_updates(state: FactoryState, paths: FactoryPaths) -> None:
             RequestState.RECONCILIATION_REQUIRED,
             "reconciliation_required",
         )
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="bot-factory-manager")
