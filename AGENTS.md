@@ -2,7 +2,7 @@
 
 ## First rule
 
-Read `docs/START_HERE.md` before making implementation changes. The Telegram Managed Bots spike is blocking. Do not turn this repository into a generic bot scaffold before proving the actual Telegram flow.
+Read `docs/START_HERE.md` and its referenced evidence before making implementation changes. Do not re-run a completed Telegram Managed Bots spike solely because this instruction exists. Block only work that depends on an unproven capability or invalidated evidence. Preserve the proven separate-manager flow and all product invariants; do not turn this repository into a generic bot scaffold.
 
 ## Product invariants
 
@@ -23,4 +23,4 @@ Read `docs/START_HERE.md` before making implementation changes. The Telegram Man
 
 ## Validation minimum
 
-Before calling a change done, run the relevant unit/integration tests once they exist, inspect `git diff`, and scan all changed artifacts for secrets or private infrastructure details.
+Before calling a change done, run the relevant unit/integration tests once they exist, inspect `git diff`, and scan all changed artifacts for secrets or private infrastructure details. Validation does not authorize publication: commit only when included in the requested scope, and obtain explicit user authorization before push, opening a PR, merge, release, submission, or deployment. Before any push/merge that triggers deployment, satisfy the applicable deployment and PROD confirmation gates.
